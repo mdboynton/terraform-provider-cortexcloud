@@ -13,7 +13,7 @@ import (
 	"path"
 	"time"
 
-	//"github.com/PaloAltoNetworks/terraform-provider-prismacloudcompute/internal/util"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 type CortexCloudAPIClientConfig struct {
@@ -31,17 +31,21 @@ type CortexCloudAPIClient struct {
 }
 
 type ErrResponse struct {
-	Err string
+    Reply ErrReply `json:"reply"`
 }
 
-//type AuthRequest struct {
-//	Username string `json:"username"`
-//	Password string `json:"password"`
-//}
-//
-//type AuthResponse struct {
-//	Token string `json:"token"`
-//}
+type ErrReply struct {
+    Code    int    `json:"err_code"`
+    Message string `json:"err_msg"`
+    // TODO: this is an array, presumably of strings?
+    Extra   []map[string]interface{} `json:"err_extra"`
+}
+
+type ErrExtra struct {
+    Type string `json:"type"`
+    Location []string `json:"loc"`
+    Message string `json:"msg"`
+}
 
 func NewCortexCloudAPIClient(ctx context.Context, config CortexCloudAPIClientConfig) (*CortexCloudAPIClient, error) {
 	// Parse request timeout value
@@ -79,10 +83,10 @@ func NewCortexCloudAPIClient(ctx context.Context, config CortexCloudAPIClientCon
 		HTTPClient: httpClient,
 	}
 
-	// Authenticate to API
-	if err := apiClient.Authenticate(ctx); err != nil {
-		return nil, err
-	}
+	//// Authenticate to API
+	//if err := apiClient.Authenticate(ctx); err != nil {
+	//	return nil, err
+	//}
 
 	return apiClient, nil
 }
@@ -151,7 +155,7 @@ func (c *CortexCloudAPIClient) Request(ctx context.Context, method, endpoint str
 	}
 
 	// Set headers
-	req.Header.Set("x-xdr-auth-id", string(*c.Config.ApiKeyId))
+	req.Header.Set("x-xdr-auth-id", fmt.Sprintf("%d", *c.Config.ApiKeyId)) // Hacky int-to-string conversion
 	req.Header.Set("Authorization", *c.Config.ApiKey)
 	//req.Header.Set("Content-Type", "application/json")
 
@@ -173,7 +177,6 @@ func (c *CortexCloudAPIClient) Request(ctx context.Context, method, endpoint str
 	// Execute request
 	res, err := c.HTTPClient.Do(req)
 	if err != nil {
-        //if c.Context.Err() != nil {
         if ctx.Err() != nil {
             return fmt.Errorf("context cancelled or timeout exceeded: %s", ctx.Err())
         }
@@ -183,10 +186,13 @@ func (c *CortexCloudAPIClient) Request(ctx context.Context, method, endpoint str
 	defer res.Body.Close()
 
 	// If API responds with HTTP 429 (Too Many Requests), sleep 3 seconds and try again
+    // TODO: implement backoff, and/or make sure context deadline handles this
 	if res.StatusCode == 429 {
 		time.Sleep(3 * time.Second)
 		return c.Request(ctx, method, endpoint, query, data, &response)
 	}
+
+    // TODO: handle 401 (auth error)
 
 	// If API responds with a non-OK status, return error
 	if res.StatusCode != http.StatusOK {
@@ -199,7 +205,9 @@ func (c *CortexCloudAPIClient) Request(ctx context.Context, method, endpoint str
 			return err
 		}
 
-		return fmt.Errorf("API returned non-OK status code %d: %s", res.StatusCode, errorResponse.Err)
+        tflog.Debug(ctx, fmt.Sprintf("%v", errorResponse))
+
+		return fmt.Errorf("API returned non-OK status code %d: %s\n\n%v", res.StatusCode, errorResponse.Reply.Message, errorResponse.Reply.Extra)
 	}
 
 	// Parse response body

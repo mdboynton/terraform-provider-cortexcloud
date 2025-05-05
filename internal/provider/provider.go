@@ -2,19 +2,17 @@ package provider
 
 import (
 	"context"
-	//"encoding/json"
 	//"fmt"
-	//"io"
-	//"os"
-	//"strings"
 
     "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api"
+    "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/resources"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/ephemeral"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -32,6 +30,7 @@ const (
 
 var (
 	_ provider.Provider = &CortexCloudProvider{}
+	//_ provider.ProviderWithEphemeralResources = &CortexCloudProvider{}
 )
 
 func New(version string) func() provider.Provider {
@@ -49,7 +48,7 @@ type CortexCloudProvider struct {
 type CortexCloudProviderModel struct {
 	ApiUrl         types.String `tfsdk:"api_url"`
 	ApiKey         types.String `tfsdk:"api_key"`
-	ApiKeyId       types.Int32 `tfsdk:"api_key_id"`
+	ApiKeyId       types.Int32  `tfsdk:"api_key_id"`
 	Insecure       types.Bool   `tfsdk:"insecure"`
 	RequestTimeout types.Int32  `tfsdk:"request_timeout"`
 	ConfigFile     types.String `tfsdk:"config_file"`
@@ -61,18 +60,15 @@ func (p *CortexCloudProvider) Schema(ctx context.Context, req provider.SchemaReq
 		Attributes: map[string]schema.Attribute{
 			"api_url": schema.StringAttribute{
 				Optional:    true,
-                //Description: "URL for Prisma Cloud Compute console. Do not include anything after the hostname.",
 				Description: "",
 			},
 			"api_key": schema.StringAttribute{
 				Optional:    true,
-				//Description: "Prisma Cloud Compute username",
 				Description: "",
 			},
-			"api_key_id": schema.StringAttribute{
+			"api_key_id": schema.Int32Attribute{
 				Optional:    true,
 				Sensitive:   true,
-				//Description: "Prisma Cloud Compute password",
 				Description: "",
 			},
 			"insecure": schema.BoolAttribute{
@@ -149,9 +145,16 @@ func (p *CortexCloudProvider) Metadata(_ context.Context, _ provider.MetadataReq
 //    }
 //}
 
+func (p *CortexCloudProvider) EphemeralResources(ctx context.Context) []func() ephemeral.EphemeralResource {
+    return []func() ephemeral.EphemeralResource{
+        //resources.NewCloudOnboardingIntegrationTemplateResource,
+    }
+}
+
 func (p *CortexCloudProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-	}
+        resources.NewCloudOnboardingIntegrationTemplateResource,
+    }
 }
 
 func (p *CortexCloudProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
@@ -192,8 +195,8 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 
 	//	return
 	//}
-
 	config, diags = GetProviderConfiguration(ctx, req)
+    resp.Diagnostics.Append(diags...)
 	if diags.HasError() {
 		return
 	}
@@ -222,6 +225,7 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 
 	resp.DataSourceData = client
 	resp.ResourceData = client
+    //resp.EphemeralResourceData = client
 }
 
 func GetProviderConfiguration(ctx context.Context, req provider.ConfigureRequest) (api.CortexCloudAPIClientConfig, diag.Diagnostics) {

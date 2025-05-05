@@ -21,7 +21,7 @@ func main() {
 	flag.Parse()
 
     opts := providerserver.ServeOpts {
-        Address:    "registry.terraform.io/PaloAltoNetworks/prismacloudcompute",
+        Address:    "registry.terraform.io/PaloAltoNetworks/cortexcloud",
         Debug:      debug,
         ProtocolVersion: 6,
     }
