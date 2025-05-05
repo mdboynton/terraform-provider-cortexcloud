@@ -13,5 +13,6 @@ type CloudOnboardingIntegrationTemplateModel struct {
     ScanMode types.String `tfsdk:"scan_mode"`
     Scope types.String `tfsdk:"scope"`
     ScopeModifications types.Object `tfsdk:"scope_modifications"`
+    InstanceId types.String `tfsdk:"instance_id"`
     CloudFormationLink types.String `tfsdk:"cloud_formation_link"`
 }

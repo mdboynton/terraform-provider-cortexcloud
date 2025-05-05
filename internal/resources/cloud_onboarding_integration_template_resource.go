@@ -227,6 +227,10 @@ func (r *CloudOnboardingIntegrationTemplateResource) Schema(ctx context.Context,
                     },
                 },
             },
+            "instance_id": schema.StringAttribute{
+                Description: "TODO",
+                Computed: true,
+            },
             "cloud_formation_link": schema.StringAttribute{
                 Description: "TODO",
                 Computed: true,
@@ -268,12 +272,13 @@ func (r *CloudOnboardingIntegrationTemplateResource) Create(ctx context.Context,
     }
 
     // Create cloud onboarding integration template
-    templateUrl := createCloudOnboardingIntegrationTemplate(ctx, &resp.Diagnostics, r.client, data)
+    instanceId, templateUrl := createCloudOnboardingIntegrationTemplate(ctx, &resp.Diagnostics, r.client, data)
 	if resp.Diagnostics.HasError() {
         return
 	}
 
-    // Populate the CloudFormation template link in model
+    // Populate the instance ID and CloudFormation template link in model
+    data.InstanceId = types.StringValue(instanceId)
     data.CloudFormationLink = types.StringValue(templateUrl)
 
     // Set state to fully populated data

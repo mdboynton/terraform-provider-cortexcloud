@@ -13,29 +13,29 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 )
 
-func createCloudOnboardingIntegrationTemplate(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, plan models.CloudOnboardingIntegrationTemplateModel) string {
+func createCloudOnboardingIntegrationTemplate(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, plan models.CloudOnboardingIntegrationTemplateModel) (string, string) {
     additionalCapabilities := cloudAccountsAPI.AdditionalCapabilities{}
     diagnostics.Append(plan.AdditionalCapabilities.As(ctx, &additionalCapabilities, basetypes.ObjectAsOptions{})...)
     if diagnostics.HasError() {
-        return ""
+        return "", ""
     }
 
     collectionConfiguration := cloudAccountsAPI.CollectionConfiguration{}
     diagnostics.Append(plan.CollectionConfiguration.As(ctx, &collectionConfiguration, basetypes.ObjectAsOptions{})...)
     if diagnostics.HasError() {
-        return ""
+        return "", ""
     }
 
     customResourcesTags := []cloudAccountsAPI.CustomResourcesTag{}
     diagnostics.Append(plan.CustomResourceTags.ElementsAs(ctx, &customResourcesTags, false)...)
     if diagnostics.HasError() {
-        return ""
+        return "", ""
     }
 
     scopeModifications := cloudAccountsAPI.ScopeModifications{}
     diagnostics.Append(plan.ScopeModifications.As(ctx, &scopeModifications, basetypes.ObjectAsOptions{})...)
     if diagnostics.HasError() {
-        return ""
+        return "", ""
     }
 
     request := cloudAccountsAPI.CreateCloudOnboardingIntegrationTemplateRequest{
@@ -57,8 +57,10 @@ func createCloudOnboardingIntegrationTemplate(ctx context.Context, diagnostics *
             "Error creating Cloud Onboarding Integration Template",
             err.Error(),
         )
-        return ""
+        return "", ""
     }
+
+    instanceId := response.Reply.Automated.TrackingGuid
 
     templateAutomatedUrl, err := url.Parse(response.Reply.Automated.Link)
     if err != nil {
@@ -66,7 +68,7 @@ func createCloudOnboardingIntegrationTemplate(ctx context.Context, diagnostics *
             "Error creating Cloud Onboarding Integration Template",
             err.Error(),
         )
-        return ""
+        return "", ""
     }
 
     templateAutomatedUrlParameters, err := url.ParseQuery(templateAutomatedUrl.RawFragment)
@@ -75,10 +77,10 @@ func createCloudOnboardingIntegrationTemplate(ctx context.Context, diagnostics *
             "Error creating Cloud Onboarding Integration Template",
             err.Error(),
         )
-        return ""
+        return "", ""
     }
     
     templateBucketUrl := templateAutomatedUrlParameters.Get("/stacks/quickcreate?templateURL")
 
-    return templateBucketUrl
+    return instanceId, templateBucketUrl
 }
