@@ -11,6 +11,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	//"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	//"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -154,6 +156,10 @@ func (r *CloudOnboardingIntegrationTemplateResource) Schema(ctx context.Context,
                 // since its not returned in the response payload
                 Description: "TODO",
                 Optional: true,
+                Computed: true,
+                //PlanModifiers: []planmodifier.String{
+                //    stringplanmodifier.RequiresReplace(),
+                //},
             },
             "scan_mode": schema.StringAttribute{
                 // TODO: validation ("MANAGED", "OUTPOST")
@@ -227,6 +233,10 @@ func (r *CloudOnboardingIntegrationTemplateResource) Schema(ctx context.Context,
                     },
                 },
             },
+            "status": schema.StringAttribute{
+                Description: "TODO",
+                Computed: true,
+            },
             "instance_id": schema.StringAttribute{
                 Description: "TODO",
                 Computed: true,
@@ -264,20 +274,33 @@ func (r *CloudOnboardingIntegrationTemplateResource) Configure(ctx context.Conte
 func (r *CloudOnboardingIntegrationTemplateResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
     defer util.PanicHandler(&resp.Diagnostics)
 
-    // Read Terraform config data into model
+    //// Read Terraform config data into model
+    //var data models.CloudOnboardingIntegrationTemplateModel
+    //resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+    //if resp.Diagnostics.HasError() {
+    //    return
+    //}
+    // Read Terraform plan data into model
     var data models.CloudOnboardingIntegrationTemplateModel
-    resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+    resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
     if resp.Diagnostics.HasError() {
         return
     }
 
     // Create cloud onboarding integration template
-    instanceId, templateUrl := createCloudOnboardingIntegrationTemplate(ctx, &resp.Diagnostics, r.client, data)
+    response := createCloudOnboardingIntegrationTemplate(ctx, &resp.Diagnostics, r.client, data)
 	if resp.Diagnostics.HasError() {
         return
 	}
 
-    // Populate the instance ID and CloudFormation template link in model
+    // Retrieve instance ID and template URL from API response
+    instanceId := response.Reply.Automated.TrackingGuid
+    templateUrl := parseTemplateURL(&resp.Diagnostics, response.Reply.Automated.Link)
+	if resp.Diagnostics.HasError() {
+        return
+	}
+
+    // Populate instance ID and template URL in model
     data.InstanceId = types.StringValue(instanceId)
     data.CloudFormationLink = types.StringValue(templateUrl)
 
@@ -289,12 +312,62 @@ func (r *CloudOnboardingIntegrationTemplateResource) Create(ctx context.Context,
 func (r *CloudOnboardingIntegrationTemplateResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
     defer util.PanicHandler(&resp.Diagnostics)
 
-    
+    // Get current state
+    var state models.CloudOnboardingIntegrationTemplateModel
+    resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
+
+    // Retrieve integration status from remote
+    integrationStatus := getCloudIntegrationStatus(ctx, &resp.Diagnostics, r.client, state.InstanceId.ValueString())
+    if resp.Diagnostics.HasError() {
+        return
+    }
+
+    // Refresh state values
+    state.RefreshPropertyValues(ctx, &resp.Diagnostics, integrationStatus)
+    if resp.Diagnostics.HasError() {
+        return
+    }
+
+    // Set refreshed state
+    resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
 }
 
 // Update updates the resource and sets the updated Terraform state on success.
 func (r *CloudOnboardingIntegrationTemplateResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
     defer util.PanicHandler(&resp.Diagnostics)
+
+    // Read Terraform plan data into model
+    var plan models.CloudOnboardingIntegrationTemplateModel
+    resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
+
+    // Get current state
+    // TODO: do we need this?
+    var state models.CloudOnboardingIntegrationTemplateModel
+    resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
+
+    // Update integration
+    updatedTemplate := updateCloudIntegration(ctx, &resp.Diagnostics, r.client, plan)
+    if resp.Diagnostics.HasError() {
+        return
+    }
+    
+    // Set state to updated values 
+    resp.Diagnostics.Append(resp.State.Set(ctx, &updatedTemplate)...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
 }
 
 // Delete deletes the resource and removes it from the Terraform state on success.
