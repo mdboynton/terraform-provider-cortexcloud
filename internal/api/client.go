@@ -13,7 +13,14 @@ import (
 	"path"
 	"time"
 
-	//"github.com/PaloAltoNetworks/terraform-provider-prismacloudcompute/internal/util"
+	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/util"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+)
+
+var (
+    defaultRequestTimeout int = 60
+    defaultRequestRetryInterval int = 3
+    obscuredApiKey string
 )
 
 type CortexCloudAPIClientConfig struct {
@@ -22,6 +29,7 @@ type CortexCloudAPIClientConfig struct {
 	ApiKeyId       *int    `tfsdk:"api_key_id" json:"api_key_id"`
 	Insecure       *bool   `tfsdk:"insecure" json:"insecure"`
 	RequestTimeout *int    `tfsdk:"request_timeout" json:"request_timeout"`
+	RequestRetryInterval *int    `tfsdk:"request_retry_interval" json:"request_retry_interval"`
 	ConfigFile     *string `tfsdk:"config_file" json:"config_file"`
 }
 
@@ -30,25 +38,15 @@ type CortexCloudAPIClient struct {
 	HTTPClient *http.Client
 }
 
-type ErrResponse struct {
-	Err string
+type HealthCheckResponse struct {
+    Status string `tfsdk:"status" json:"status"`
 }
 
-//type AuthRequest struct {
-//	Username string `json:"username"`
-//	Password string `json:"password"`
-//}
-//
-//type AuthResponse struct {
-//	Token string `json:"token"`
-//}
-
 func NewCortexCloudAPIClient(ctx context.Context, config CortexCloudAPIClientConfig) (*CortexCloudAPIClient, error) {
-	// Parse request timeout value
+	// Parse request timeout config value
 	if config.RequestTimeout == nil {
-		defaultTimeout := 60
-		config.RequestTimeout = &defaultTimeout
-	} else if *config.RequestTimeout > math.MaxInt {
+		config.RequestTimeout = &defaultRequestTimeout
+    } else if *config.RequestTimeout > math.MaxInt { // TODO: cap this at something sane
 		return nil, fmt.Errorf("error occured while creating API client: Invalid value supplied for request_timeout. Value must be an integer between 1 and %d.", math.MaxInt)
 	}
 
@@ -56,15 +54,26 @@ func NewCortexCloudAPIClient(ctx context.Context, config CortexCloudAPIClientCon
 	if err != nil {
 		return nil, fmt.Errorf("error occured while creating API client: Failed to parse request timeout value\n%s", err.Error())
 	}
-
 	//            //    fmt.Sprintf("Error configuring provider: Invalid value specified for \"request_timeout\" in configuration file. Value must be an integer between 1 and %d", math.MaxInt),
+
+	// Parse request retry interval config value
+	if config.RequestRetryInterval == nil {
+		config.RequestRetryInterval = &defaultRequestRetryInterval
+    } else if *config.RequestRetryInterval > math.MaxInt { // TODO: cap this at something sane
+		return nil, fmt.Errorf("error occured while creating API client: Invalid value supplied for request_retry_interval. Value must be an integer between 1 and %d.", math.MaxInt)
+	}
+
+	//requestRetryInterval, err := time.ParseDuration(fmt.Sprintf("%ds", *config.RequestRetryInterval))
+	//if err != nil {
+	//	return nil, fmt.Errorf("error occured while creating API client: Failed to parse request retry interval value\n%s", err.Error())
+	//}
 
 	// Instantiate HTTP client
 	httpClient := &http.Client{
 		Timeout: requestTimeout,
 	}
 
-	// If the insecure flag is set to true, add TLS configuration with InsecureSkipVerify enabled
+	// If the insecure flag is set to true, add TLS client configuration with InsecureSkipVerify enabled
 	if config.Insecure != nil && *config.Insecure {
 		transport := http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -79,51 +88,37 @@ func NewCortexCloudAPIClient(ctx context.Context, config CortexCloudAPIClientCon
 		HTTPClient: httpClient,
 	}
 
-	// Authenticate to API
-	if err := apiClient.Authenticate(ctx); err != nil {
-		return nil, err
-	}
+    // Send request to health check endpoint to ensure credentials are valid 
+    // and the Cortex Cloud tenant is reachable
+    tflog.Debug(ctx, "Running health check")
+    healthCheckResponse, err := apiClient.HealthCheck(ctx)
+    if err != nil {
+        return nil, err
+    } else if healthCheckResponse.Status != "available" {
+        return nil, fmt.Errorf("Health check request failed (returned status \"%s\")", healthCheckResponse.Status)
+    }
 
 	return apiClient, nil
 }
 
-// TODO: change this to use the equivalent of prisma's _ping endpoint just to make sure the api key works
-func (c *CortexCloudAPIClient) Authenticate(ctx context.Context) (err error) {
-	//util.LogDebug("Authenticating to Prisma Cloud Compute API")
+func (c *CortexCloudAPIClient) HealthCheck(ctx context.Context) (HealthCheckResponse, error) {
+    var response HealthCheckResponse
 
-	//res := AuthResponse{}
+    if err := c.Request(ctx, "GET", HealthCheckEndpoint, nil, nil, &response); err != nil {
+        return response, fmt.Errorf("Health check request failed: %s", err.Error())
+    }
 
-	//if c == nil {
-	//	return fmt.Errorf("error occured while authenticating to Prisma Cloud Compute API: client uninitialized")
-	//}
-
-	////if c.Config.ConsoleURL == nil {
-	//if c.Config.ApiURL == nil {
-	//	return fmt.Errorf("error occured while authenticating to Prisma Cloud Compute API: nil console URL")
-	//}
-
-	//if c.Config.ApiKey == nil {
-	//	return fmt.Errorf("error occured while authenticating to Prisma Cloud Compute API: nil username")
-	//}
-
-	//if c.Config.ApiKeyId == nil {
-	//	return fmt.Errorf("error occured while authenticating to Prisma Cloud Compute API: nil password")
-	//}
-
-	//if err := c.Request(ctx, http.MethodPost, "api/v1/authenticate", nil, AuthRequest{*c.Config.Username, *c.Config.Password}, &res); err != nil {
-	//	return fmt.Errorf("error occured while authenticating to Prisma Cloud Compute API: %v", err)
-	//}
-	//c.JWT = res.Token
-
-	return nil
+    return response, nil
 }
 
-func (c *CortexCloudAPIClient) Request(ctx context.Context, method, endpoint string, query, data, response interface{}) (error) {
-    var (
-        payloadBuffer bytes.Buffer
-        errorResponse ErrResponse
-        err error
-    )
+func (c *CortexCloudAPIClient) Request(ctx context.Context, method, endpoint string, query, data, responseBody interface{}) (error) {
+    // TODO: create getters/setters for config values so we dont need nil checks in here
+    if c.Config.RequestRetryInterval == nil {
+        requestRetryInterval := 3
+        c.Config.RequestRetryInterval = &requestRetryInterval
+    }
+
+    requestRetryInterval := *c.Config.RequestRetryInterval
 
 	// Parse API URL from config
 	apiUrl, err := url.Parse(*c.Config.ApiURL)
@@ -135,13 +130,17 @@ func (c *CortexCloudAPIClient) Request(ctx context.Context, method, endpoint str
 	apiUrl.Path = path.Join(apiUrl.Path, endpoint)
 
 	// Marshal request payload into buffer, if not nil
+    var (
+        payloadBuffer bytes.Buffer
+        jsonData []byte
+    )
 	if data != nil {
-		data_json, err := json.Marshal(data)
+		jsonData, err = json.MarshalIndent(data, "", "  ")
 		if err != nil {
 			return err
 		}
 
-		payloadBuffer = *bytes.NewBuffer(data_json)
+		payloadBuffer = *bytes.NewBuffer(jsonData)
 	}
 
 	// Create new HTTP request object
@@ -151,7 +150,7 @@ func (c *CortexCloudAPIClient) Request(ctx context.Context, method, endpoint str
 	}
 
 	// Set headers
-	req.Header.Set("x-xdr-auth-id", string(*c.Config.ApiKeyId))
+	req.Header.Set("x-xdr-auth-id", fmt.Sprintf("%d", *c.Config.ApiKeyId)) // Hacky int-to-string conversion
 	req.Header.Set("Authorization", *c.Config.ApiKey)
 	//req.Header.Set("Content-Type", "application/json")
 
@@ -169,11 +168,14 @@ func (c *CortexCloudAPIClient) Request(ctx context.Context, method, endpoint str
 
 		req.URL.RawQuery = queryParams.Encode()
 	}
+ 
+    // Print a debug log of the HTTP request details and create a UUID for the
+    // request to track its response in the debug logs
+    requestId := util.LogHttpRequest(ctx, req.Method, req.URL.String(), req.Header.Get("x-xdr-auth-id"), req.Header.Get("Authorization"), string(jsonData))
 
-	// Execute request
+	// Execute HTTP request
 	res, err := c.HTTPClient.Do(req)
 	if err != nil {
-        //if c.Context.Err() != nil {
         if ctx.Err() != nil {
             return fmt.Errorf("context cancelled or timeout exceeded: %s", ctx.Err())
         }
@@ -182,38 +184,79 @@ func (c *CortexCloudAPIClient) Request(ctx context.Context, method, endpoint str
 	}
 	defer res.Body.Close()
 
-	// If API responds with HTTP 429 (Too Many Requests), sleep 3 seconds and try again
-	if res.StatusCode == 429 {
-		time.Sleep(3 * time.Second)
-		return c.Request(ctx, method, endpoint, query, data, &response)
-	}
+    // Check HTTP response status and populate response body
+    err, retryRequested := getHttpResponseBody(res, responseBody)
+    if err != nil {
+        return err
+    }
 
-	// If API responds with a non-OK status, return error
-	if res.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(res.Body)
-		if err != nil {
-			return fmt.Errorf("error reading body from non-OK response: %s", err)
-		}
+    // Attempt to print a debug log of the response, or an error message if
+    // the response body cannot be unmarshalled
+    err = util.LogHttpResponse(ctx, requestId, res.StatusCode, responseBody)
+    if err != nil {
+        tflog.Debug(ctx, fmt.Sprintf("Failed to unmarshal body of HTTP response for request_uid=%s: %s", requestId, err.Error())) 
+    }
 
-		if err = json.Unmarshal(body, &errorResponse); err != nil {
-			return err
-		}
+    // If getHttpResponseBody returns true for the boolean return value, the API
+    // returned a 429 status code so we need to sleep for the number of seconds
+    // dictated by the requestRetryInterval var and then retry the request
+    if retryRequested {
+        tflog.Debug(ctx, fmt.Sprintf("API returned 429 (too many requests), sleeping for %d seconds and retrying...", *c.Config.RequestRetryInterval))
+        time.Sleep(time.Duration(requestRetryInterval) * time.Second)
+        return c.Request(ctx, method, endpoint, query, data, responseBody)
+    }
 
-		return fmt.Errorf("API returned non-OK status code %d: %s", res.StatusCode, errorResponse.Err)
-	}
+    return nil
+}
 
-	// Parse response body
-	body, err := io.ReadAll(res.Body)
+func getHttpResponseBody(response *http.Response, responseValuePtr interface{}) (error, bool) {
+    isOkResponse := (response.StatusCode == http.StatusOK)
+
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		return err
+        if !isOkResponse {
+		    return fmt.Errorf("error reading body from non-OK response: %s", err.Error()), false
+        } else {
+		    return fmt.Errorf("error reading body from OK response: %s", err.Error()), false
+        }
 	}
 
-	// If response body is non-empty, unmarshal into response object
-	if len(body) > 0 && response != nil {
-		if err = json.Unmarshal(body, response); err != nil {
-			return err
-		}
-	}
+    switch response.StatusCode {
+        case 200:
+            // Attempt to unmarshal the response body into responseValuePtr
+            // and return
+            if (len(body) > 0 && responseValuePtr != nil) {
+                if err = json.Unmarshal(body, responseValuePtr); err != nil {
+		            return fmt.Errorf("error unmarshalling body from OK response: %s", err.Error()), false
+                }
+            }
+            return nil, false
+        case 429:
+            // Return true for the boolean return value to signal to the Request
+            // method that we need to sleep and then retry the request
+            return nil, true
+        case 401:
+            // Return an error indicating that the provider configuration values
+            // should be verified
+		    return fmt.Errorf("API returned 401 (Unauthorized). Verify your provider configuration values and try again."), false
+        default:
+            // If the response contains a non-zero length body, attempt to 
+            // unmarshal the response body and return an error with its contents 
+            if len(body) > 0 {
+                var errorResponse map[string]any
+                if err = json.Unmarshal(body, &errorResponse); err != nil {
+                    return fmt.Errorf("error unmarshalling body from non-OK response (HTTP status code %d): %s", response.StatusCode, err.Error()), false
+                }
 
-	return nil
+                var errorResponseStr string
+                for k, v := range errorResponse["reply"].(map[string]any) {
+                    errorResponseStr += fmt.Sprintf("\t%s: %v\n", k, v)
+                }
+
+                return fmt.Errorf("API returned non-OK response: \n%v", errorResponseStr), false
+            // Otherwise, return an error with just the status code
+            } else {
+                return fmt.Errorf("API returned non-OK response (HTTP status code %d)", response.StatusCode), false
+            }
+    }
 }
