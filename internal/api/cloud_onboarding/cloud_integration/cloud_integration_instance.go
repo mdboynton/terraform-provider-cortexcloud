@@ -183,7 +183,7 @@ type CloudIntegrationInstanceDetailsSecurityCapability struct {
 	Status      string `json:"status" tfsdk:"status"`
 }
 
-// Edit Integration Instance Template request structs
+// Edit Integration Instance request structs
 
 type CloudIntegrationEditRequest struct {
 	RequestData CloudIntegrationEditRequestData `json:"request_data" tfsdk:"request_data"`
@@ -202,7 +202,7 @@ type CloudIntegrationEditRequestData struct {
 
 // Functions
 
-func Create(ctx context.Context, client *api.CortexCloudAPIClient, req CreateCloudOnboardingIntegrationTemplateRequest) (CreateCloudOnboardingIntegrationTemplateResponse, error) {
+func CreateTemplate(ctx context.Context, client *api.CortexCloudAPIClient, req CreateCloudOnboardingIntegrationTemplateRequest) (CreateCloudOnboardingIntegrationTemplateResponse, error) {
 	var response CreateCloudOnboardingIntegrationTemplateResponse
 	if err := client.Request(ctx, "POST", api.CreateCloudOnboardingIntegrationTemplateEndpoint, nil, req, &response); err != nil {
 		return response, fmt.Errorf("creating cloud onboarding integration template: %s", err.Error())
@@ -211,7 +211,7 @@ func Create(ctx context.Context, client *api.CortexCloudAPIClient, req CreateClo
 	return response, nil
 }
 
-func GetInstances(ctx context.Context, client *api.CortexCloudAPIClient, req CloudIntegrationInstancesRequest) (CloudIntegrationInstancesResponse, error) {
+func Get(ctx context.Context, client *api.CortexCloudAPIClient, req CloudIntegrationInstancesRequest) (CloudIntegrationInstancesResponse, error) {
 	var response CloudIntegrationInstancesResponse
 	if err := client.Request(ctx, "POST", api.GetCloudIntegrationInstancesEndpoint, nil, req, &response); err != nil {
 		return response, fmt.Errorf("getting cloud integration instances: %s", err.Error())
@@ -220,7 +220,7 @@ func GetInstances(ctx context.Context, client *api.CortexCloudAPIClient, req Clo
 	return response, nil
 }
 
-func GetInstanceDetails(ctx context.Context, client *api.CortexCloudAPIClient, req CloudIntegrationInstanceDetailsRequest) (CloudIntegrationInstanceDetailsResponse, error) {
+func GetDetails(ctx context.Context, client *api.CortexCloudAPIClient, req CloudIntegrationInstanceDetailsRequest) (CloudIntegrationInstanceDetailsResponse, error) {
 	var response CloudIntegrationInstanceDetailsResponse
 	if err := client.Request(ctx, "POST", api.GetCloudIntegrationInstanceDetailsEndpoint, nil, req, &response); err != nil {
 		return response, fmt.Errorf("getting cloud integration instance details: %s", err.Error())
@@ -229,10 +229,10 @@ func GetInstanceDetails(ctx context.Context, client *api.CortexCloudAPIClient, r
 	return response, nil
 }
 
-func UpdateInstanceTemplate(ctx context.Context, client *api.CortexCloudAPIClient, req CloudIntegrationEditRequest) (CreateCloudOnboardingIntegrationTemplateResponse, error) {
+func Update(ctx context.Context, client *api.CortexCloudAPIClient, req CloudIntegrationEditRequest) (CreateCloudOnboardingIntegrationTemplateResponse, error) {
 	var response CreateCloudOnboardingIntegrationTemplateResponse
 	if err := client.Request(ctx, "POST", api.EditCloudIntegrationInstanceTemplateEndpoint, nil, req, &response); err != nil {
-		return response, fmt.Errorf("updating cloud onboarding integration template: %s", err.Error())
+		return response, fmt.Errorf("updating cloud integration instance: %s", err.Error())
 	}
 
 	return response, nil

@@ -1,4 +1,4 @@
-package resources
+package cloud_integration
 
 import (
 	"context"
@@ -31,7 +31,7 @@ type CloudIntegrationInstanceResource struct {
 
 // Metadata returns the resource type name.
 func (r *CloudIntegrationInstanceResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_cloud_onboarding_integration_template"
+	resp.TypeName = req.ProviderTypeName + "_cloud_integration_instance"
 }
 
 // Schema defines the schema for the resource.
@@ -371,13 +371,13 @@ func (r *CloudIntegrationInstanceResource) Update(ctx context.Context, req resou
 	}
 
 	// Update integration
-	updatedTemplate := updateCloudIntegration(ctx, &resp.Diagnostics, r.client, plan)
+	updatedIntegration := updateCloudIntegration(ctx, &resp.Diagnostics, r.client, plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Set state to updated values
-	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedTemplate)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedIntegration)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

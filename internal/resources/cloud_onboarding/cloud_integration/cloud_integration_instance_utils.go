@@ -1,8 +1,7 @@
-package resources
+package cloud_integration
 
 import (
 	"context"
-	//"fmt"
 	"net/url"
 
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api"
@@ -53,7 +52,7 @@ func createCloudOnboardingIntegrationTemplate(ctx context.Context, diagnostics *
 		},
 	}
 
-	response, err := cloudIntegrationInstancesAPI.Create(ctx, client, request)
+	response, err := cloudIntegrationInstancesAPI.CreateTemplate(ctx, client, request)
 	if err != nil {
 		diagnostics.AddError(
 			"Error creating Cloud Onboarding Integration Template",
@@ -66,7 +65,7 @@ func createCloudOnboardingIntegrationTemplate(ctx context.Context, diagnostics *
 }
 
 func getCloudIntegrations(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, request cloudIntegrationInstancesAPI.CloudIntegrationInstancesRequest) cloudIntegrationInstancesAPI.CloudIntegrationInstancesResponse {
-	response, err := cloudIntegrationInstancesAPI.GetInstances(ctx, client, request)
+	response, err := cloudIntegrationInstancesAPI.Get(ctx, client, request)
 	if err != nil {
 		diagnostics.AddError(
 			"Error retrieving Cloud Integrations",
@@ -99,7 +98,7 @@ func getCloudIntegrationsByInstanceId(ctx context.Context, diagnostics *diag.Dia
 		},
 	}
 
-	response, err := cloudIntegrationInstancesAPI.GetInstances(ctx, client, request)
+	response, err := cloudIntegrationInstancesAPI.Get(ctx, client, request)
 	if err != nil {
 		diagnostics.AddError(
 			"Error retrieving Cloud Integrations by instance ID",
@@ -118,7 +117,7 @@ func getCloudIntegrationStatus(ctx context.Context, diagnostics *diag.Diagnostic
 		},
 	}
 
-	response, err := cloudIntegrationInstancesAPI.GetInstanceDetails(ctx, client, request)
+	response, err := cloudIntegrationInstancesAPI.GetDetails(ctx, client, request)
 	if err != nil {
 		diagnostics.AddError(
 			"Error reading Cloud Integration status",
@@ -169,7 +168,7 @@ func updateCloudIntegration(ctx context.Context, diagnostics *diag.Diagnostics, 
 		},
 	}
 
-	response, err := cloudIntegrationInstancesAPI.UpdateInstanceTemplate(ctx, client, request)
+	response, err := cloudIntegrationInstancesAPI.Update(ctx, client, request)
 	if err != nil {
 		diagnostics.AddError(
 			"Error updating Cloud Onboarding Integration Template",
