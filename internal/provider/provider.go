@@ -3,32 +3,33 @@ package provider
 import (
 	"context"
 	//"fmt"
-    "os"
+	"os"
 
-    "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api"
-    "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/resources"
+	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api"
+	cloudIntegrationResources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/resources/cloud_onboarding/cloud_integration"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+
 	//"github.com/hashicorp/terraform-plugin-framework/ephemeral"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 const (
-	ApiUrlEnvVar                    = "CORTEX_API_BASE_URL"
-	ApiKeyEnvVar                    = "CORTEX_API_KEY"
-	ApiKeyIdEnvVar                  = "CORTEX_API_KEY_ID"
-	InsecureEnvVar                  = "CORTEX_TF_INSECURE"
-	RequestTimeoutEnvVar            = "CORTEX_TF_REQUEST_TIMEOUT"
-	RequestRetryIntervalEnvVar      = "CORTEX_TF_REQUEST_RETRY_INTERVAL"
+	ApiUrlEnvVar               = "CORTEX_API_BASE_URL"
+	ApiKeyEnvVar               = "CORTEX_API_KEY"
+	ApiKeyIdEnvVar             = "CORTEX_API_KEY_ID"
+	InsecureEnvVar             = "CORTEX_TF_INSECURE"
+	RequestTimeoutEnvVar       = "CORTEX_TF_REQUEST_TIMEOUT"
+	RequestRetryIntervalEnvVar = "CORTEX_TF_REQUEST_RETRY_INTERVAL"
 
-	InsecureDefault                 = false
-	RequestTimeoutDefault           = 60
-	RequestRetryIntervalDefault     = 3
+	InsecureDefault             = false
+	RequestTimeoutDefault       = 60
+	RequestRetryIntervalDefault = 3
 )
 
 var (
@@ -61,58 +62,58 @@ func (p *CortexCloudProvider) Schema(ctx context.Context, req provider.SchemaReq
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"api_url": schema.StringAttribute{
-				Optional:    true,
+				Optional: true,
 				Description: "The FQDN of your Cortex Cloud tenant. You can retrieve " +
-                    "this from the Cortex Cloud console by navigating to Settings > " +
-                    "Configurations > Integrations > API Keys and clicking the " +
-                    "\"Copy API URL\" button. Can also be configured using the " +
-                    "`CORTEX_API_BASE_URL` environment variable.",
+					"this from the Cortex Cloud console by navigating to Settings > " +
+					"Configurations > Integrations > API Keys and clicking the " +
+					"\"Copy API URL\" button. Can also be configured using the " +
+					"`CORTEX_API_BASE_URL` environment variable.",
 			},
 			"api_key": schema.StringAttribute{
-				Optional:    true,
-				Sensitive:   true,
+				Optional:  true,
+				Sensitive: true,
 				Description: "The API key for the user in Cortex Cloud that the " +
-                    "provider will use. You can create this from the Cortex Cloud " +
-                    "console by navigating to Settings > Configurations > Integrations " +
-                    "> API Keys. Can also be configured using the `CORTEX_API_KEY` " +
-                    "environment variable. \n\nNote: If you are running the provider " +
-                    "with Terraform with the `TF_LOG` environment variable set to `DEBUG`, " +
-                    "the provider will output this value in the debug logs.",
+					"provider will use. You can create this from the Cortex Cloud " +
+					"console by navigating to Settings > Configurations > Integrations " +
+					"> API Keys. Can also be configured using the `CORTEX_API_KEY` " +
+					"environment variable. \n\nNote: If you are running the provider " +
+					"with Terraform with the `TF_LOG` environment variable set to `DEBUG`, " +
+					"the provider will output this value in the debug logs.",
 			},
 			"api_key_id": schema.Int32Attribute{
-				Optional:    true,
-				Sensitive:   true,
+				Optional:  true,
+				Sensitive: true,
 				Description: "The ID of the API key provided in the \"api_key\" " +
-                    "argument. You can retrieve this from the Cortex Cloud console " +
-                    "by navigating to Settings > Configurations > Integrations > " +
-                    "API Keys. Can also be configured using the `CORTEX_API_KEY_ID` " +
-                    "environment variable.",
+					"argument. You can retrieve this from the Cortex Cloud console " +
+					"by navigating to Settings > Configurations > Integrations > " +
+					"API Keys. Can also be configured using the `CORTEX_API_KEY_ID` " +
+					"environment variable.",
 			},
 			"insecure": schema.BoolAttribute{
-				Optional:    true,
-                Description: "Explicity allow the provider to perform \"insecure\" " +
-                    "SSL requests. If omitted, the default value is `false`. Can also " +
-                    "be configured using the `CORTEX_TF_INSECURE` environment variable.",
+				Optional: true,
+				Description: "Explicity allow the provider to perform \"insecure\" " +
+					"SSL requests. If omitted, the default value is `false`. Can also " +
+					"be configured using the `CORTEX_TF_INSECURE` environment variable.",
 			},
 			"request_timeout": schema.Int32Attribute{
-				Optional:    true,
+				Optional: true,
 				Description: "Time (in seconds) to wait for requests to the Cortex " +
-                    "Cloud API to return before timing out. If omitted, the default value " +
-                    "is `60`. Can also be configured using the `CORTEX_TF_REQUEST_TIMEOUT` " +
-                    "environment variable.",
+					"Cloud API to return before timing out. If omitted, the default value " +
+					"is `60`. Can also be configured using the `CORTEX_TF_REQUEST_TIMEOUT` " +
+					"environment variable.",
 			},
 			"request_retry_interval": schema.Int32Attribute{
-				Optional:    true,
+				Optional: true,
 				Description: "Time (in seconds) to wait between API requests in " +
-                    "the event of an HTTP 429 (Too Many Requests) response. If omitted, " +
-                    "the default value is `3`. Can also be configured using the " +
-                    "`CORTEX_TF_REQUEST_RETRY_INTERVAL` environment variable.",
+					"the event of an HTTP 429 (Too Many Requests) response. If omitted, " +
+					"the default value is `3`. Can also be configured using the " +
+					"`CORTEX_TF_REQUEST_RETRY_INTERVAL` environment variable.",
 			},
 			"config_file": schema.StringAttribute{
-				Optional:    true,
+				Optional: true,
 				Description: "File containing the provider configuration values " +
-                    "in JSON format. See examples/creds.json. If omitted, the provider " +
-                    "will use values from the provider block and/or environment variables.",
+					"in JSON format. See examples/creds.json. If omitted, the provider " +
+					"will use values from the provider block and/or environment variables.",
 			},
 		},
 	}
@@ -184,13 +185,12 @@ func (p *CortexCloudProvider) Metadata(_ context.Context, _ provider.MetadataReq
 
 func (p *CortexCloudProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-        resources.NewCloudOnboardingIntegrationTemplateResource,
-    }
+		cloudIntegrationResources.NewCloudIntegrationInstanceResource,
+	}
 }
 
 func (p *CortexCloudProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{
-	}
+	return []func() datasource.DataSource{}
 }
 
 func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
@@ -227,7 +227,7 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 	//	return
 	//}
 	config, diags = GetProviderConfiguration(ctx, req)
-    resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(diags...)
 	if diags.HasError() {
 		return
 	}
@@ -251,18 +251,18 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 	client, err := api.NewCortexCloudAPIClient(ctx, config)
 	if err != nil {
 		resp.Diagnostics.AddError("API Client Initalization Error", err.Error())
-        return
+		return
 	}
 	tflog.Debug(ctx, "API client initialized successfully")
 
-    // Print warning if debug logs are enabled
-    if (os.Getenv("TF_LOG") == "DEBUG" || os.Getenv("TF_LOG") == "TRACE" || os.Getenv("TF_LOG_PROVIDER") == "DEBUG" || os.Getenv("TF_LOG_PROVIDER") == "TRACE") {
-        tflog.Warn(ctx, "Debug logging enabled. Be aware that your API key and key ID will be visible in the provider log output!")
-    }
+	// Print warning if debug logs are enabled
+	if os.Getenv("TF_LOG") == "DEBUG" || os.Getenv("TF_LOG") == "TRACE" || os.Getenv("TF_LOG_PROVIDER") == "DEBUG" || os.Getenv("TF_LOG_PROVIDER") == "TRACE" {
+		tflog.Warn(ctx, "Debug logging enabled. Be aware that your API key and key ID will be visible in the provider log output!")
+	}
 
 	resp.DataSourceData = client
 	resp.ResourceData = client
-    //resp.EphemeralResourceData = client
+	//resp.EphemeralResourceData = client
 }
 
 func GetProviderConfiguration(ctx context.Context, req provider.ConfigureRequest) (api.CortexCloudAPIClientConfig, diag.Diagnostics) {
