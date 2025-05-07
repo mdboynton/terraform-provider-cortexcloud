@@ -65,31 +65,50 @@ func createCloudOnboardingIntegrationTemplate(ctx context.Context, diagnostics *
     return response
 }
 
-func parseTemplateURL(diagnostics *diag.Diagnostics, templateAutomatedLink string) string {
-    var templateBucketUrl string
-
-    templateAutomatedUrl, err := url.Parse(templateAutomatedLink)
+func getCloudIntegrations(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, request cloudAccountsAPI.CloudIntegrationInstancesRequest) (cloudAccountsAPI.CloudIntegrationInstancesResponse) {
+    response, err := cloudAccountsAPI.GetInstances(ctx, client, request)
 	if err != nil {
 		diagnostics.AddError(
-			"Error creating Cloud Onboarding Integration Template",
+			"Error retrieving Cloud Integrations",
 			err.Error(),
 		)
-		return templateBucketUrl
+		return response
 	}
 
-    templateAutomatedUrlParameters, err := url.ParseQuery(templateAutomatedUrl.RawFragment)
+    return response
+}
+
+func getCloudIntegrationsByInstanceId(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, instanceId string) (cloudAccountsAPI.CloudIntegrationInstancesResponse) {
+    request := cloudAccountsAPI.CloudIntegrationInstancesRequest{
+        RequestData: cloudAccountsAPI.CloudIntegrationInstancesRequestData{
+            FilterData: cloudAccountsAPI.CloudIntegrationInstancesFilterData{
+                Filter: cloudAccountsAPI.CloudIntegrationInstancesFilter{
+                    And: []cloudAccountsAPI.CloudIntegrationInstancesAndFilter{
+                        {
+                            SearchField: "ID",
+                            SearchType: "EQ",
+                            SearchValue: instanceId,
+                        },
+                    },
+                },
+                Paging: cloudAccountsAPI.CloudIntegrationInstancesPaging{
+                    From: 0,
+                    To: 1000,
+                },
+            },
+        },
+    }
+
+    response, err := cloudAccountsAPI.GetInstances(ctx, client, request)
 	if err != nil {
 		diagnostics.AddError(
-			"Error creating Cloud Onboarding Integration Template",
+			"Error retrieving Cloud Integrations by instance ID",
 			err.Error(),
 		)
-		return templateBucketUrl
+		return response
 	}
 
-    // TODO: verify with regex
-	templateBucketUrl = templateAutomatedUrlParameters.Get("/stacks/quickcreate?templateURL")
-
-    return templateBucketUrl
+    return response
 }
 
 func getCloudIntegrationStatus(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, instanceId string) (cloudAccountsAPI.CloudIntegrationInstanceDetailsResponse) {
@@ -161,3 +180,86 @@ func updateCloudIntegration(ctx context.Context, diagnostics *diag.Diagnostics, 
 
     return response
 }
+
+func parseTemplateURL(diagnostics *diag.Diagnostics, templateAutomatedLink string) string {
+    var templateBucketUrl string
+
+    templateAutomatedUrl, err := url.Parse(templateAutomatedLink)
+	if err != nil {
+		diagnostics.AddError(
+			"Error creating Cloud Onboarding Integration Template",
+			err.Error(),
+		)
+		return templateBucketUrl
+	}
+
+    templateAutomatedUrlParameters, err := url.ParseQuery(templateAutomatedUrl.RawFragment)
+	if err != nil {
+		diagnostics.AddError(
+			"Error creating Cloud Onboarding Integration Template",
+			err.Error(),
+		)
+		return templateBucketUrl
+	}
+
+    // TODO: verify with regex
+	templateBucketUrl = templateAutomatedUrlParameters.Get("/stacks/quickcreate?templateURL")
+
+    return templateBucketUrl
+}
+
+//func populateComputedAttributeValues(diagnostics *diag.Diagnostics, model *models.CloudOnboardingIntegrationTemplateModel, response cloudAccountsAPI.CloudIntegrationInstancesResponse, instanceId, cloudFormationLink string) {
+//    model.InstanceId = types.StringValue(instanceId)
+//    model.CloudFormationLink= types.StringValue(cloudFormationLink)
+//
+//    if (len(response.Reply.Data) == 0 || len(response.Reply.Data) > 1) {
+//        model.Status = types.StringNull()
+//        model.InstanceName = types.StringNull()
+//        model.AccountName = types.StringNull()
+//        model.OutpostId = types.StringNull()
+//        model.CreationTime = types.StringNull()
+//    
+//        diagnostics.AddWarning(
+//            "Integration Status Unknown",
+//            "Unable to retrieve computed values for the following arguments " +
+//            "from the Cortex Cloud API: status, instance_name, account_name, " +
+//            "outpost_id, creation_time\n\n" +
+//            "The provider will attempt to populate these arguments during " +
+//            "the next terraform apply operation.",
+//        )
+//
+//        return
+//    }
+//
+//    integrationData := response.Reply.Data[0]
+//
+//    if integrationData.Status != "" {
+//        model.Status = types.StringValue(integrationData.Status)
+//    } else {
+//        model.Status = types.StringNull()
+//    }
+//
+//    if integrationData.InstanceName != "" {
+//        model.InstanceName = types.StringValue(integrationData.InstanceName)
+//    } else {
+//        model.InstanceName = types.StringNull()
+//    }
+//
+//    if integrationData.AccountName != "" {
+//        model.AccountName = types.StringValue(integrationData.AccountName)
+//    } else {
+//        model.AccountName = types.StringNull()
+//    }
+//
+//    if integrationData.OutpostId != "" {
+//        model.OutpostId = types.StringValue(integrationData.OutpostId)
+//    } else {
+//        model.OutpostId = types.StringNull()
+//    }
+//
+//    if integrationData.CreationTime != 0 {
+//        model.CreationTime = types.StringValue(time.Unix(int64(integrationData.CreationTime), 0).Format("2006-01-02T15:04:05.000Z"))
+//    } else {
+//        model.CreationTime = types.StringNull()
+//    }
+//}

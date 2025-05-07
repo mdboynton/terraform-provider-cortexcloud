@@ -3,54 +3,27 @@ package util
 import (
 	"context"
 	"fmt"
-	"log"
+    "encoding/json"
+    "github.com/google/uuid"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-var (
-    Log *log.Logger
-    debugLogPaddingEnvVar string = "PRISMACLOUDCOMPUTE_DEBUG_LOG_PADDING"
-    debugLogPadding string = ""
-    debugLogPaddingEnabled bool
-)
+func LogHttpRequest(ctx context.Context, method, url, xdrAuthId, authorization, payload string) string {
+    requestId := uuid.New().String()
 
-func init() {
-    // Assign address of default logger to Log
-	Log = log.Default()
+    tflog.Debug(ctx, fmt.Sprintf("Sending HTTP Request: request_uid=%s method=\"%s\" url=\"%s\" headers.x-xdr-auth-id=\"%s\" headers.Authorization=\"%s\" body=\n%s\n", requestId, method, url, xdrAuthId, authorization, payload))
 
-    // Remove log message datetime prefix by clearing the Ldate and Ltime flags using a bit clear operaton
-    Log.SetFlags(log.Flags() &^ (log.Ldate | log.Ltime))
+    return requestId
+}
 
-    // Add newlines around log messages for easier troubleshooting if PRISMACLOUDCOMPUTE_DEBUG_LOG_PADDING env var is set to true
-    err := GetEnvironmentVariable(debugLogPaddingEnvVar, &debugLogPaddingEnabled)
+func LogHttpResponse(ctx context.Context, requestId string, statusCode int, body interface{}) error {
+    jsonBody, err := json.MarshalIndent(body, "", "  ")
     if err != nil {
-        Log.Printf("Failed to parse %s value: %s", debugLogPaddingEnvVar, err.Error())
-    } else if (debugLogPaddingEnabled == true) {
-        debugLogPadding = "\n\n" 
+        return err
     }
-}
 
-func LogDebug(message string) {
-    Log.Printf(fmt.Sprintf("%s%s%s\n", debugLogPadding, message, debugLogPadding))
-}
+    tflog.Debug(ctx, fmt.Sprintf("Recieved HTTP Response: request_uid=%s status_code=%d body=\n%s\n", requestId, statusCode, string(jsonBody)))
 
-func LogfDebug(object interface{}) {
-    Log.Printf(fmt.Sprintf("%s%s%s\n", debugLogPadding, object, debugLogPadding))
-}
-
-func HCLogInfo(ctx context.Context, message string) {
-	tflog.Info(ctx, fmt.Sprintf("%s%s%s", debugLogPadding, message, debugLogPadding))
-}
-
-func HCLogWarn(ctx context.Context, message string) {
-	tflog.Warn(ctx, fmt.Sprintf("%s%s%s", debugLogPadding, message, debugLogPadding))
-}
-
-func HCLogDebug(ctx context.Context, message string) {
-	tflog.Debug(ctx, fmt.Sprintf("%s%s%s", debugLogPadding, message, debugLogPadding))
-}
-
-func HCLogfDebug(ctx context.Context, object interface{}) {
-	tflog.Debug(ctx, fmt.Sprintf("%s%v%s", debugLogPadding, object, debugLogPadding))
+    return nil
 }

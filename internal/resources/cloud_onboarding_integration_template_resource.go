@@ -1,8 +1,8 @@
 package resources
 
 import (
-    "context"
-    "fmt"
+	"context"
+	"fmt"
 
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api"
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models"
@@ -10,7 +10,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	//"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	//"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
@@ -241,6 +240,18 @@ func (r *CloudOnboardingIntegrationTemplateResource) Schema(ctx context.Context,
                 Description: "TODO",
                 Computed: true,
             },
+            "account_name": schema.StringAttribute{
+                Description: "TODO",
+                Computed: true,
+            },
+            "outpost_id": schema.StringAttribute{
+                Description: "TODO",
+                Computed: true,
+            },
+            "creation_time": schema.StringAttribute{
+                Description: "TODO",
+                Computed: true,
+            },
             "cloud_formation_link": schema.StringAttribute{
                 Description: "TODO",
                 Computed: true,
@@ -274,12 +285,6 @@ func (r *CloudOnboardingIntegrationTemplateResource) Configure(ctx context.Conte
 func (r *CloudOnboardingIntegrationTemplateResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
     defer util.PanicHandler(&resp.Diagnostics)
 
-    //// Read Terraform config data into model
-    //var data models.CloudOnboardingIntegrationTemplateModel
-    //resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-    //if resp.Diagnostics.HasError() {
-    //    return
-    //}
     // Read Terraform plan data into model
     var data models.CloudOnboardingIntegrationTemplateModel
     resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -300,9 +305,17 @@ func (r *CloudOnboardingIntegrationTemplateResource) Create(ctx context.Context,
         return
 	}
 
-    // Populate instance ID and template URL in model
-    data.InstanceId = types.StringValue(instanceId)
-    data.CloudFormationLink = types.StringValue(templateUrl)
+    // Retrieve cloud integration details from API
+    integrationStatus := getCloudIntegrationsByInstanceId(ctx, &resp.Diagnostics, r.client, instanceId)
+	if resp.Diagnostics.HasError() {
+        return
+	}
+
+    // Populate API response values in model
+    data.RefreshPropertyValues(&resp.Diagnostics, integrationStatus, &instanceId, &templateUrl)
+	if resp.Diagnostics.HasError() {
+        return
+	}
 
     // Set state to fully populated data
     resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -320,13 +333,13 @@ func (r *CloudOnboardingIntegrationTemplateResource) Read(ctx context.Context, r
     }
 
     // Retrieve integration status from remote
-    integrationStatus := getCloudIntegrationStatus(ctx, &resp.Diagnostics, r.client, state.InstanceId.ValueString())
+    integrationStatus := getCloudIntegrationsByInstanceId(ctx, &resp.Diagnostics, r.client, state.InstanceId.ValueString())
     if resp.Diagnostics.HasError() {
         return
     }
 
     // Refresh state values
-    state.RefreshPropertyValues(ctx, &resp.Diagnostics, integrationStatus)
+    state.RefreshPropertyValues(&resp.Diagnostics, integrationStatus, nil, nil)
     if resp.Diagnostics.HasError() {
         return
     }

@@ -3,6 +3,7 @@ module github.com/PaloAltoNetworks/terraform-provider-cortexcloud
 go 1.23.2
 
 require (
+	github.com/google/uuid v1.6.0
 	github.com/hashicorp/terraform-plugin-framework v1.14.1
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 )

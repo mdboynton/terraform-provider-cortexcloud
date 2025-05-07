@@ -8,6 +8,7 @@ import (
 )
 
 // Create Cloud Onboarding Integration Template request structs
+
 type CreateCloudOnboardingIntegrationTemplateRequest struct {
     RequestData CreateCloudOnboardingIntegrationTemplateRequestData `json:"request_data"`
 }
@@ -58,6 +59,7 @@ type CloudIntegrationScopeModificationsRegions struct {
 }
     
 // Create Cloud Onboarding Integration Template response structs
+
 type CreateCloudOnboardingIntegrationTemplateResponse struct {
     Reply CreateCloudOnboardingIntegrationTemplateReply `json:"reply" tfsdk:"reply"`
 }
@@ -77,13 +79,80 @@ type CreateCloudOnboardingIntegrationTemplateManual struct {
     CF string `json:"CF" tfsdk:"tf_arm"`
 }
 
+// Get Instances request structs
+
+type CloudIntegrationInstancesRequest struct {
+    RequestData CloudIntegrationInstancesRequestData `json:"request_data" tfsdk:"request_data"`
+}
+
+type CloudIntegrationInstancesRequestData struct {
+    FilterData CloudIntegrationInstancesFilterData `json:"filter_data" tfsdk:"filter_data"`
+}
+
+type CloudIntegrationInstancesFilterData struct {
+    Sort []CloudIntegrationInstancesSort `json:"sort,omitempty" tfsdk:"sort"`
+    Paging CloudIntegrationInstancesPaging `json:"paging,omitempty" tfsdk:"paging"`
+    Filter CloudIntegrationInstancesFilter `json:"filter" tfsdk:"filter"`
+}
+
+type CloudIntegrationInstancesSort struct {
+    Field string `json:"FIELD" tfsdk:"field"`
+    Order string `json:"ORDER" tfsdk:"order"`
+}
+
+type CloudIntegrationInstancesPaging struct {
+    From int `json:"from" tfsdk:"from"` // TODO: cant be less than 0
+    To int `json:"to" tfsdk:"to"` // TODO: cant be more than 1000
+}
+
+type CloudIntegrationInstancesFilter struct {
+    And []CloudIntegrationInstancesAndFilter `json:"AND" tfsdk:"and"`
+}
+
+type CloudIntegrationInstancesAndFilter struct {
+    SearchField string `json:"SEARCH_FIELD" tfsdk:"search_field"`
+    SearchType string `json:"SEARCH_TYPE" tfsdk:"search_type"`
+    SearchValue string `json:"SEARCH_VALUE" tfsdk:"search_value"`
+}
+
+// Get Instances response structs
+
+type CloudIntegrationInstancesResponse struct {
+    Reply CloudIntegrationInstancesResponseReply `json:"reply" tfsdk:"reply"`
+}
+
+type CloudIntegrationInstancesResponseReply struct {
+    Data []CloudIntegrationInstancesResponseData `json:"DATA" tfsdk:"data"`
+    FilterCount int `json:"FILTER_COUNT" tfsdk:"FILTER_COUNT"`
+    TotalCloud int `json:"TOTAL_COUNT" tfsdk:"TOTAL_COUNT"`
+}
+
+type CloudIntegrationInstancesResponseData struct {
+    InstanceId string `json:"instance_id" tfsdk:"instance_id"`
+    CloudProvider string `json:"cloud_provider" tfsdk:"cloud_provider"`
+    InstanceName string `json:"instance_name" tfsdk:"instance_name"`
+    AccountName string `json:"account_name" tfsdk:"account_name"`
+    //Accounts
+    Scope string `json:"scope" tfsdk:"scope"`
+    ScanMode string `json:"scan_mode" tfsdk:"scan_mode"`
+    CreationTime int `json:"creation_time" tfsdk:"creation_time"`
+    CustomResourceTags string `json:"custom_resource_tags" tfsdk:"custom_resource_tags"`
+    //ProvisioningMethod
+    AdditionalCapabilities string `json:"additional_capabilities" tfsdk:"additional_capabilities"`
+    IsPendingChanges string `json:"is_pending_changes" tfsdk:"is_pending_changes"` // TODO: might be a bool?
+    Status string `json:"status" tfsdk:"status"`
+    OutpostId string `json:"outpost_id" tfsdk:"outpost_id"`
+    //CollectionConfiguration string `json:"collection_configuration" tfsdk:"collection_configuration"`
+}
+
 // Get Instance Details request structs
+
 type CloudIntegrationInstanceDetailsRequest struct {
     RequestData CloudIntegrationInstanceDetailsRequestData `json:"request_data" tfsdk:"request_data"`
 }
 
 type CloudIntegrationInstanceDetailsRequestData struct {
-    InstanceId string `json:"instance_id" tfsdk:"instance_id"`
+    InstanceId string `json:"id" tfsdk:"instance_id"`
 }
 
 type CloudIntegrationInstanceDetailsResponse struct {
@@ -115,6 +184,7 @@ type CloudIntegrationInstanceDetailsSecurityCapability struct {
 }
 
 // Edit Integration Instance Template request structs
+
 type CloudIntegrationEditRequest struct {
     RequestData CloudIntegrationEditRequestData `json:"request_data" tfsdk:"request_data"`
 }
@@ -131,10 +201,20 @@ type CloudIntegrationEditRequestData struct {
 }
 
 // Functions
+
 func Create(ctx context.Context, client *api.CortexCloudAPIClient, req CreateCloudOnboardingIntegrationTemplateRequest) (CreateCloudOnboardingIntegrationTemplateResponse, error) {
     var response CreateCloudOnboardingIntegrationTemplateResponse
     if err := client.Request(ctx, "POST", api.CreateCloudOnboardingIntegrationTemplateEndpoint, nil, req, &response); err != nil {
         return response, fmt.Errorf("creating cloud onboarding integration template: %s", err.Error())
+    }
+
+    return response, nil
+}
+
+func GetInstances(ctx context.Context, client *api.CortexCloudAPIClient, req CloudIntegrationInstancesRequest) (CloudIntegrationInstancesResponse, error) {
+    var response CloudIntegrationInstancesResponse
+    if err := client.Request(ctx, "POST", api.GetCloudIntegrationInstancesEndpoint, nil, req, &response); err != nil {
+        return response, fmt.Errorf("getting cloud integration instances: %s", err.Error())
     }
 
     return response, nil
