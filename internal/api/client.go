@@ -18,9 +18,10 @@ import (
 )
 
 var (
+    defaultInsecure bool = false
     defaultRequestTimeout int = 60
     defaultRequestRetryInterval int = 3
-    obscuredApiKey string
+    //obscuredApiKey string
 )
 
 type CortexCloudAPIClientConfig struct {
@@ -30,18 +31,23 @@ type CortexCloudAPIClientConfig struct {
 	Insecure       *bool   `tfsdk:"insecure" json:"insecure"`
 	RequestTimeout *int    `tfsdk:"request_timeout" json:"request_timeout"`
 	RequestRetryInterval *int    `tfsdk:"request_retry_interval" json:"request_retry_interval"`
-	ConfigFile     *string `tfsdk:"config_file" json:"config_file"`
+    CrashStackDir   *string `tfsdk:"crash_stack_dir" json:"crack_stack_dir"`
 }
 
+// CortexCloudAPIClient implements the HTTP client that will be used to execute
+// requests to the Cortex Cloud API.
 type CortexCloudAPIClient struct {
 	Config     CortexCloudAPIClientConfig
 	HTTPClient *http.Client
 }
 
-type HealthCheckResponse struct {
-    Status string `tfsdk:"status" json:"status"`
-}
-
+// NewCortexCloudAPIClient configures and returns a new CortexCloudAPIClient
+// using the values defined in the provider.
+// 
+// If a given provider attribute is not configured, the value will be retrieved
+// from the associated environment variable. If the environment variable is empty
+// or not set, the provider will return an error diagnostic if the attribute is
+// optional, else it will use the specified default value.
 func NewCortexCloudAPIClient(ctx context.Context, config CortexCloudAPIClientConfig) (*CortexCloudAPIClient, error) {
 	// Parse request timeout config value
 	if config.RequestTimeout == nil {
@@ -101,16 +107,27 @@ func NewCortexCloudAPIClient(ctx context.Context, config CortexCloudAPIClientCon
 	return apiClient, nil
 }
 
+// HealthCheckResponse represents the response body of the health check endpoint.
+type HealthCheckResponse struct {
+    Status string `tfsdk:"status" json:"status"`
+}
+
+// HealthCheck sends a request to the health check endpoint and returns the response.
+//
+// If the request fails, an error message is returned suggesting that the user
+// check the provider configuration and verify that they can reach their Cortex 
+// Cloud tenant's API URL.
 func (c *CortexCloudAPIClient) HealthCheck(ctx context.Context) (HealthCheckResponse, error) {
     var response HealthCheckResponse
 
     if err := c.Request(ctx, "GET", HealthCheckEndpoint, nil, nil, &response); err != nil {
-        return response, fmt.Errorf("Health check request failed: %s", err.Error())
+        return response, fmt.Errorf("Health check request failed: %s \nVerify that your provider configuration is correct and the Cortex Cloud API is reachable, then try again.", err.Error())
     }
 
     return response, nil
 }
 
+// Request sends an HTTP request with the http.Client in the CortexCloudAPIClient object.
 func (c *CortexCloudAPIClient) Request(ctx context.Context, method, endpoint string, query, data, responseBody interface{}) (error) {
     // TODO: create getters/setters for config values so we dont need nil checks in here
     if c.Config.RequestRetryInterval == nil {

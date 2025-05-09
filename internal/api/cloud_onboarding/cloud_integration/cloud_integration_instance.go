@@ -3,8 +3,11 @@ package cloud_integration
 import (
 	"context"
 	"fmt"
+    "net/url"
 
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api"
+    
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 )
 
 // Create Cloud Onboarding Integration Template request structs
@@ -202,38 +205,119 @@ type CloudIntegrationEditRequestData struct {
 
 // Functions
 
-func CreateTemplate(ctx context.Context, client *api.CortexCloudAPIClient, req CreateCloudOnboardingIntegrationTemplateRequest) (CreateCloudOnboardingIntegrationTemplateResponse, error) {
+func CreateTemplate(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, request CreateCloudOnboardingIntegrationTemplateRequest) (CreateCloudOnboardingIntegrationTemplateResponse, string) {
 	var response CreateCloudOnboardingIntegrationTemplateResponse
-	if err := client.Request(ctx, "POST", api.CreateCloudOnboardingIntegrationTemplateEndpoint, nil, req, &response); err != nil {
-		return response, fmt.Errorf("creating cloud onboarding integration template: %s", err.Error())
+
+	if err := client.Request(ctx, "POST", api.CreateCloudOnboardingIntegrationTemplateEndpoint, nil, request, &response); err != nil {
+		diagnostics.AddError(
+			"Error creating Cloud Onboarding Integration Template",
+			err.Error(),
+		)
 	}
 
-	return response, nil
+    templateUrl, err := getCloudFormationTemplateUrl(response.Reply.Automated.Link)
+    if err != nil {
+		diagnostics.AddError(
+			"Error creating Cloud Onboarding Integration Template",
+            fmt.Sprintf("Failed to parse CloudFormation template URL from API response: %s", err.Error()),
+		)
+    }
+
+	return response, templateUrl 
 }
 
-func Get(ctx context.Context, client *api.CortexCloudAPIClient, req CloudIntegrationInstancesRequest) (CloudIntegrationInstancesResponse, error) {
+func Get(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, request CloudIntegrationInstancesRequest) CloudIntegrationInstancesResponse {
 	var response CloudIntegrationInstancesResponse
-	if err := client.Request(ctx, "POST", api.GetCloudIntegrationInstancesEndpoint, nil, req, &response); err != nil {
-		return response, fmt.Errorf("getting cloud integration instances: %s", err.Error())
+
+	if err := client.Request(ctx, "POST", api.GetCloudIntegrationInstancesEndpoint, nil, request, &response); err != nil {
+		diagnostics.AddError(
+			"Error retrieving Cloud Integrations",
+			err.Error(),
+		)
 	}
 
-	return response, nil
+	return response
 }
 
-func GetDetails(ctx context.Context, client *api.CortexCloudAPIClient, req CloudIntegrationInstanceDetailsRequest) (CloudIntegrationInstanceDetailsResponse, error) {
+func GetByInstanceId(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, instanceId string) CloudIntegrationInstancesResponse {
+	var response CloudIntegrationInstancesResponse
+
+    requestuest := createGetByInstanceIdRequest(instanceId)
+
+	if err := client.Request(ctx, "POST", api.GetCloudIntegrationInstancesEndpoint, nil, requestuest, &response); err != nil {
+		diagnostics.AddError(
+			"Error retrieving Cloud Integrations",
+			err.Error(),
+		)
+	}
+
+	return response
+}
+
+func GetDetails(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, request CloudIntegrationInstanceDetailsRequest) CloudIntegrationInstanceDetailsResponse {
 	var response CloudIntegrationInstanceDetailsResponse
-	if err := client.Request(ctx, "POST", api.GetCloudIntegrationInstanceDetailsEndpoint, nil, req, &response); err != nil {
-		return response, fmt.Errorf("getting cloud integration instance details: %s", err.Error())
+
+	if err := client.Request(ctx, "POST", api.GetCloudIntegrationInstanceDetailsEndpoint, nil, request, &response); err != nil {
+		diagnostics.AddError(
+			"Error retrieving Cloud Integrations by instance ID",
+			err.Error(),
+		)
 	}
 
-	return response, nil
+	return response
 }
 
-func Update(ctx context.Context, client *api.CortexCloudAPIClient, req CloudIntegrationEditRequest) (CreateCloudOnboardingIntegrationTemplateResponse, error) {
+func Update(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, request CloudIntegrationEditRequest) CreateCloudOnboardingIntegrationTemplateResponse {
 	var response CreateCloudOnboardingIntegrationTemplateResponse
-	if err := client.Request(ctx, "POST", api.EditCloudIntegrationInstanceTemplateEndpoint, nil, req, &response); err != nil {
-		return response, fmt.Errorf("updating cloud integration instance: %s", err.Error())
+
+	if err := client.Request(ctx, "POST", api.EditCloudIntegrationInstanceTemplateEndpoint, nil, request, &response); err != nil {
+		diagnostics.AddError(
+			"Error updating Cloud Onboarding Integration Template",
+			err.Error(),
+		)
 	}
 
-	return response, nil
+	return response
+}
+
+func createGetByInstanceIdRequest(instanceId string) CloudIntegrationInstancesRequest {
+	return CloudIntegrationInstancesRequest{
+		RequestData: CloudIntegrationInstancesRequestData{
+			FilterData: CloudIntegrationInstancesFilterData{
+				Filter: CloudIntegrationInstancesFilter{
+					And: []CloudIntegrationInstancesAndFilter{
+						{
+							SearchField: "ID",
+							SearchType:  "EQ",
+							SearchValue: instanceId,
+						},
+					},
+				},
+				Paging: CloudIntegrationInstancesPaging{
+					From: 0,
+					To: 1000,
+				},
+			},
+		},
+	}
+}
+
+
+func getCloudFormationTemplateUrl(responseUrl string) (string, error) {
+	var cloudFormationTemplateUrl string
+
+	parsedResponseUrl, err := url.Parse(responseUrl)
+	if err != nil {
+		return cloudFormationTemplateUrl, err
+	}
+
+	queryValueMap, err := url.ParseQuery(parsedResponseUrl.RawFragment)
+	if err != nil {
+		return cloudFormationTemplateUrl, err
+	}
+
+	// TODO: verify with regex
+	cloudFormationTemplateUrl = queryValueMap.Get("/stacks/quickcreate?templateURL")
+
+	return cloudFormationTemplateUrl, nil
 }

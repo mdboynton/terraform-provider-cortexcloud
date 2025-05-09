@@ -5,7 +5,8 @@ import (
 	"fmt"
 
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api"
-	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models"
+	cloudIntegrationAPI "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api/cloud_onboarding/cloud_integration"
+	models "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/cloud_onboarding"
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/util"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -263,6 +264,7 @@ func (r *CloudIntegrationInstanceResource) Schema(ctx context.Context, req resou
 
 // Configure adds the provider-configured client to the resource.
 func (r *CloudIntegrationInstanceResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+    // Prevent panic if the provider has not been configured
 	if req.ProviderData == nil {
 		return
 	}
@@ -286,39 +288,41 @@ func (r *CloudIntegrationInstanceResource) Create(ctx context.Context, req resou
 	defer util.PanicHandler(&resp.Diagnostics)
 
 	// Read Terraform plan data into model
-	var data models.CloudIntegrationInstanceModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	var plan models.CloudIntegrationInstanceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Create cloud onboarding integration template
-	response := createCloudOnboardingIntegrationTemplate(ctx, &resp.Diagnostics, r.client, data)
+	// Generate API request body from plan
+    request := plan.ToCreateRequest(ctx, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Retrieve instance ID and template URL from API response
+	// Create new cloud onboarding integration template
+    response, templateUrl := cloudIntegrationAPI.CreateTemplate(ctx, &resp.Diagnostics, r.client, request)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Get instance ID from API response
 	instanceId := response.Reply.Automated.TrackingGuid
-	templateUrl := parseTemplateURL(&resp.Diagnostics, response.Reply.Automated.Link)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 
 	// Retrieve cloud integration details from API
-	integrationStatus := getCloudIntegrationsByInstanceId(ctx, &resp.Diagnostics, r.client, instanceId)
+    integrationDetails := cloudIntegrationAPI.GetByInstanceId(ctx, &resp.Diagnostics, r.client, instanceId)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Populate API response values in model
-	data.RefreshPropertyValues(&resp.Diagnostics, integrationStatus, &instanceId, &templateUrl)
+	// Populate API response values into model
+	plan.RefreshPropertyValues(&resp.Diagnostics, integrationDetails, &instanceId, &templateUrl)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Set state to fully populated data
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
 // Read refreshes the Terraform state with the latest data.
@@ -332,14 +336,14 @@ func (r *CloudIntegrationInstanceResource) Read(ctx context.Context, req resourc
 		return
 	}
 
-	// Retrieve integration status from remote
-	integrationStatus := getCloudIntegrationsByInstanceId(ctx, &resp.Diagnostics, r.client, state.InstanceId.ValueString())
+	// Retrieve integration details from API
+    integrationDetails := cloudIntegrationAPI.GetByInstanceId(ctx, &resp.Diagnostics, r.client, state.InstanceName.ValueString())
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Refresh state values
-	state.RefreshPropertyValues(&resp.Diagnostics, integrationStatus, nil, nil)
+	state.RefreshPropertyValues(&resp.Diagnostics, integrationDetails, nil, nil)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -362,16 +366,14 @@ func (r *CloudIntegrationInstanceResource) Update(ctx context.Context, req resou
 		return
 	}
 
-	// Get current state
-	// TODO: do we need this?
-	var state models.CloudIntegrationInstanceModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+    // Generate API request body from plan
+    request := plan.ToUpdateRequest(ctx, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Update integration
-	updatedIntegration := updateCloudIntegration(ctx, &resp.Diagnostics, r.client, plan)
+	updatedIntegration := cloudIntegrationAPI.Update(ctx, &resp.Diagnostics, r.client, request)
 	if resp.Diagnostics.HasError() {
 		return
 	}
