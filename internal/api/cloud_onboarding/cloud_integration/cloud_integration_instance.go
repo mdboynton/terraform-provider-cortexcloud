@@ -17,6 +17,7 @@ type CreateCloudOnboardingIntegrationTemplateRequest struct {
 }
 
 type CreateCloudOnboardingIntegrationTemplateRequestData struct {
+    AccountDetails          *CloudIntegrationAccountDetails `json:"account_details,omitempty"`
 	AdditionalCapabilities  CloudIntegrationAdditionalCapabilities  `json:"additional_capabilities"`
 	CloudProvider           string                                  `json:"cloud_provider"`
 	CollectionConfiguration CloudIntegrationCollectionConfiguration `json:"collection_configuration"`
@@ -26,6 +27,10 @@ type CreateCloudOnboardingIntegrationTemplateRequestData struct {
 	ScanMode            string                               `json:"scan_mode"`
 	Scope               string                               `json:"scope"`
 	ScopeModifications  CloudIntegrationScopeModifications   `json:"scope_modifications"`
+}
+
+type CloudIntegrationAccountDetails struct {
+    OrganizationId string `json:"organization_id" tfsdk:"organization_id"`
 }
 
 type CloudIntegrationAdditionalCapabilities struct {
@@ -54,7 +59,12 @@ type CloudIntegrationCustomResourcesTag struct {
 }
 
 type CloudIntegrationScopeModifications struct {
+	Accounts CloudIntegrationScopeModificationsAccounts `json:"accounts" tfsdk:"accounts"`
 	Regions CloudIntegrationScopeModificationsRegions `json:"regions" tfsdk:"regions"`
+}
+
+type CloudIntegrationScopeModificationsAccounts struct {
+	Enabled bool `json:"enabled" tfsdk:"enabled"`
 }
 
 type CloudIntegrationScopeModificationsRegions struct {

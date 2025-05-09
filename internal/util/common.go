@@ -9,6 +9,10 @@ import (
     "github.com/hashicorp/terraform-plugin-framework/diag"
 )
 
+// PanicHandler is a global panic handler to catch all unexpected errors to
+// prevent the provider from crashing.
+//
+// The crash stack is written into a local text file
 func PanicHandler(diagnostics *diag.Diagnostics) {
 	if r := recover(); r != nil {
 		programCounter, _, _, ok := runtime.Caller(2) // 1=the panic, 2=who called the panic

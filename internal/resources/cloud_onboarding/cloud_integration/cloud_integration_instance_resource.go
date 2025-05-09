@@ -9,8 +9,11 @@ import (
 	models "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/cloud_onboarding"
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/util"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	//"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	//"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
@@ -40,6 +43,30 @@ func (r *CloudIntegrationInstanceResource) Schema(ctx context.Context, req resou
 	resp.Schema = schema.Schema{
 		Description: "TODO",
 		Attributes: map[string]schema.Attribute{
+            // TODO: currently can only be specified for Azure integrations
+			"account_details": schema.SingleNestedAttribute{
+				Description: "TODO",
+				Optional: true,
+				Computed: true,
+				Attributes: map[string]schema.Attribute{
+                    "organization_id": schema.StringAttribute{
+                        // TODO: validation
+				        Description: "TODO",
+				        Optional: true,
+				        Computed: true,
+                    },
+                },
+                Default: objectdefault.StaticValue(types.ObjectNull(map[string]attr.Type{"organization_id": types.StringType})),
+                //Default: objectdefault.StaticValue(types.ObjectValueMust(
+                //        map[string]attr.Type{
+                //            "organization_id": types.StringType,
+                //        },
+                //        map[string]attr.Value{
+                //            "organization_id": types.StringNull(),
+                //        },
+                //    ),
+                //),
+            },
 			"additional_capabilities": schema.SingleNestedAttribute{
 				Description: "TODO",
 				//Required: true,
@@ -122,13 +149,6 @@ func (r *CloudIntegrationInstanceResource) Schema(ctx context.Context, req resou
 						},
 					},
 				},
-				//Attributes: map[string]schema.Attribute{
-				//    "audit_logs": schema.BoolAttribute{
-				//        Description: "TODO",
-				//        Optional: true,
-				//        Computed: true,
-				//    },
-				//},
 			},
 			"custom_resource_tags": schema.SetNestedAttribute{
 				Description: "TODO",
@@ -178,33 +198,31 @@ func (r *CloudIntegrationInstanceResource) Schema(ctx context.Context, req resou
 				Computed:    true,
 				Attributes: map[string]schema.Attribute{
 					// TODO: projects, subscriptions (not currently in UI)
-					//"accounts": schema.SingleNestedAttribute{
-					//    Description: "TODO",
-					//    Optional: true,
-					//    Computed: true,
-					//    Attributes: map[string]schema.Attribute{
-					//        // TODO: do we need an enabled attribute or is it
-					//        // not needed since it's optional?
-					//        // TODO: project_ids, subscription_ids (not currently in UI)
-					//        "enabled": schema.BoolAttribute{
-					//            Description: "TODO",
-					//            Optional: true,
-					//            Computed: true,
-					//        },
-					//        "type": schema.StringAttribute{
-					//            // TODO: validation ("INCLUDE", "EXCLUDE")
-					//            Description: "TODO",
-					//            Optional: true,
-					//            Computed: true,
-					//        },
-					//        "account_ids": schema.SetAttribute{
-					//            Description: "TODO",
-					//            Optional: true,
-					//            Computed: true,
-					//            ElementType: types.StringType,
-					//        },
-					//    },
-					//},
+					"accounts": schema.SingleNestedAttribute{
+					    Description: "TODO",
+					    Optional: true,
+					    Computed: true,
+					    Attributes: map[string]schema.Attribute{
+					        // TODO: project_ids, subscription_ids (not currently in UI)
+					        "enabled": schema.BoolAttribute{
+					            Description: "TODO",
+					            Optional: true,
+					            Computed: true,
+					        },
+					        //"type": schema.StringAttribute{
+					        //    // TODO: validation ("INCLUDE", "EXCLUDE")
+					        //    Description: "TODO",
+					        //    Optional: true,
+					        //    Computed: true,
+					        //},
+					        //"account_ids": schema.SetAttribute{
+					        //    Description: "TODO",
+					        //    Optional: true,
+					        //    Computed: true,
+					        //    ElementType: types.StringType,
+					        //},
+					    },
+					},
 					"regions": schema.SingleNestedAttribute{
 						Description: "TODO",
 						Optional:    true,

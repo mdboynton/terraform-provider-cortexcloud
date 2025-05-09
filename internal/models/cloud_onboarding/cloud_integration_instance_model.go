@@ -12,6 +12,7 @@ import (
 )
 
 type CloudIntegrationInstanceModel struct {
+	AccountDetails          types.Object `tfsdk:"account_details"`
 	AdditionalCapabilities  types.Object `tfsdk:"additional_capabilities"`
 	CloudProvider           types.String `tfsdk:"cloud_provider"`
 	CollectionConfiguration types.Object `tfsdk:"collection_configuration"`
@@ -29,6 +30,13 @@ type CloudIntegrationInstanceModel struct {
 }
 
 func (m *CloudIntegrationInstanceModel) ToCreateRequest(ctx context.Context, diagnostics *diag.Diagnostics) api.CreateCloudOnboardingIntegrationTemplateRequest {
+    nullAsEmptyOpts := basetypes.ObjectAsOptions{
+        UnhandledNullAsEmpty: true,
+    }
+   
+    accountDetails := api.CloudIntegrationAccountDetails{}
+	diagnostics.Append(m.AccountDetails.As(ctx, &accountDetails, nullAsEmptyOpts)...)
+
 	additionalCapabilities := api.CloudIntegrationAdditionalCapabilities{}
 	diagnostics.Append(m.AdditionalCapabilities.As(ctx, &additionalCapabilities, basetypes.ObjectAsOptions{})...)
 
@@ -45,7 +53,7 @@ func (m *CloudIntegrationInstanceModel) ToCreateRequest(ctx context.Context, dia
 		return api.CreateCloudOnboardingIntegrationTemplateRequest{}
 	}
 
-	return api.CreateCloudOnboardingIntegrationTemplateRequest{
+    request := api.CreateCloudOnboardingIntegrationTemplateRequest{
 		RequestData: api.CreateCloudOnboardingIntegrationTemplateRequestData{
 			AdditionalCapabilities:  additionalCapabilities,
 			CloudProvider:           m.CloudProvider.ValueString(),
@@ -57,6 +65,14 @@ func (m *CloudIntegrationInstanceModel) ToCreateRequest(ctx context.Context, dia
 			ScopeModifications:      scopeModifications,
 		},
 	}
+
+    if !m.AccountDetails.IsNull() {
+        request.RequestData.AccountDetails = &accountDetails
+    } else {
+        request.RequestData.AccountDetails = nil
+    }
+
+    return request
 }
 
 func (m *CloudIntegrationInstanceModel) ToUpdateRequest(ctx context.Context, diagnostics *diag.Diagnostics) api.CloudIntegrationEditRequest {
