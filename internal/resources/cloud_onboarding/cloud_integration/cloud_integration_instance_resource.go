@@ -7,6 +7,7 @@ import (
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api"
 	cloudIntegrationAPI "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api/cloud_onboarding/cloud_integration"
 	models "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/cloud_onboarding"
+	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/validators"
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/util"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -14,8 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
-	//"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	//"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -130,6 +130,9 @@ func (r *CloudIntegrationInstanceResource) Schema(ctx context.Context, req resou
 				// TODO: validation
 				Description: "TODO",
 				Required:    true,
+                Validators: []validator.String{
+                    validators.StringEnumValidator(models.CloudIntegrationCloudProviderEnums),
+                },
 			},
 			"collection_configuration": schema.SingleNestedAttribute{
 				Description: "TODO",
@@ -182,15 +185,19 @@ func (r *CloudIntegrationInstanceResource) Schema(ctx context.Context, req resou
 				//},
 			},
 			"scan_mode": schema.StringAttribute{
-				// TODO: validation ("MANAGED", "OUTPOST")
 				// TODO: include warning about additional costs when using outpost
 				Description: "TODO",
 				Required:    true,
+                Validators: []validator.String{
+                    validators.StringEnumValidator(models.CloudIntegrationScanModeEnums),
+                },
 			},
 			"scope": schema.StringAttribute{
-				// TODO: validation ("ACCOUNT", "ORGANIZATION", "ACCOUNT_GROUP")
 				Description: "TODO",
 				Required:    true,
+                Validators: []validator.String{
+                    validators.StringEnumValidator(models.CloudIntegrationScopeEnums),
+                },
 			},
 			"scope_modifications": schema.SingleNestedAttribute{
 				Description: "TODO",
