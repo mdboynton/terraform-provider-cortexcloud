@@ -32,7 +32,7 @@ func (v stringEnumValidator) ValidateString(ctx context.Context, req validator.S
         return
     }
 
-    if !slices.Contains(v.Enums, req.ConfigValue.String()) {
+    if !slices.Contains(v.Enums, req.ConfigValue.ValueString()) {
         resp.Diagnostics.AddAttributeError(
             req.Path,
             "Validation Error", 
