@@ -105,6 +105,14 @@ func (m *CloudIntegrationInstanceModel) ToUpdateRequest(ctx context.Context, dia
 	}
 }
 
+func (m *CloudIntegrationInstanceModel) ToDeleteRequest(ctx context.Context, diagnostics *diag.Diagnostics) api.CloudIntegrationDeleteRequest {
+    return api.CloudIntegrationDeleteRequest{
+        RequestData: api.CloudIntegrationDeleteRequestData{
+            Ids: []string{ m.InstanceId.ValueString() },
+        },
+    }
+}
+
 func (m *CloudIntegrationInstanceModel) RefreshPropertyValues(diagnostics *diag.Diagnostics, response api.CloudIntegrationInstancesResponse, instanceId, cloudFormationLink *string) {
 	if instanceId != nil {
 		m.InstanceId = types.StringValue(*instanceId)

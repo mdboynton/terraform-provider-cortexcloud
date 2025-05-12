@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	//"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -282,6 +283,13 @@ func (r *CloudIntegrationInstanceResource) Schema(ctx context.Context, req resou
 					        //    ElementType: types.StringType,
 					        //},
 					    },
+                        Default: objectdefault.StaticValue(
+                            types.ObjectNull(
+                                map[string]attr.Type{
+                                    "enabled": types.BoolType,
+                                },
+                            ),
+                        ),
 					},
 					"regions": schema.SingleNestedAttribute{
 						Description: "TODO",
@@ -424,7 +432,7 @@ func (r *CloudIntegrationInstanceResource) Read(ctx context.Context, req resourc
 	}
 
 	// Retrieve integration details from API
-    integrationDetails := cloudIntegrationAPI.GetByInstanceId(ctx, &resp.Diagnostics, r.client, state.InstanceName.ValueString())
+    integrationDetails := cloudIntegrationAPI.GetByInstanceId(ctx, &resp.Diagnostics, r.client, state.InstanceId.ValueString())
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -475,4 +483,31 @@ func (r *CloudIntegrationInstanceResource) Update(ctx context.Context, req resou
 // Delete deletes the resource and removes it from the Terraform state on success.
 func (r *CloudIntegrationInstanceResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	defer util.PanicHandler(&resp.Diagnostics)
+
+	// Get current state
+	var state models.CloudIntegrationInstanceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+    // Generate API request body from state
+    request := state.ToDeleteRequest(ctx, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+    // Delete integration
+    cloudIntegrationAPI.Delete(ctx, &resp.Diagnostics, r.client, request)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+    // Retrieve integration details from API
+    integrationDetails := cloudIntegrationAPI.GetByInstanceId(ctx, &resp.Diagnostics, r.client, state.InstanceName.ValueString())
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+    tflog.Debug(ctx, fmt.Sprintf("integration details: \n\n%+v", integrationDetails))
 }

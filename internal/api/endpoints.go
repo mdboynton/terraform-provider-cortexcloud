@@ -17,6 +17,7 @@ var (
     GetCloudIntegrationInstancesEndpoint = fmt.Sprintf("%s/v1/cloud_onboarding/get_instances", BaseEndpoint)
     GetCloudIntegrationInstanceDetailsEndpoint = fmt.Sprintf("%s/v1/cloud_onboarding/get_instance_details", BaseEndpoint)
     EditCloudIntegrationInstanceTemplateEndpoint = fmt.Sprintf("%s/v1/cloud_onboarding/edit_instance", BaseEndpoint)
+    DeleteCloudIntegrationInstanceEndpoint = fmt.Sprintf("%s/v1/cloud_onboarding/delete_instance", BaseEndpoint)
 
     // Application Security Rules
     ApplicationSecurityRulesEndpoint = fmt.Sprintf("%s/appsec/v1/rules", BaseEndpoint)

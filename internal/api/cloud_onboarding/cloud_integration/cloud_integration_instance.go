@@ -3,10 +3,11 @@ package cloud_integration
 import (
 	"context"
 	"fmt"
-    "net/url"
+	"net/http"
+	"net/url"
 
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api"
-    
+
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 )
 
@@ -43,6 +44,7 @@ type CloudIntegrationAdditionalCapabilities struct {
 
 type CloudIntegrationRegistryScanningOptions struct {
 	Type string `json:"type" tfsdk:"type"`
+	LastDays *int `json:"last_days,omitempty" tfsdk:"last_days"`
 }
 
 type CloudIntegrationCollectionConfiguration struct {
@@ -59,8 +61,8 @@ type CloudIntegrationCustomResourcesTag struct {
 }
 
 type CloudIntegrationScopeModifications struct {
-	Accounts CloudIntegrationScopeModificationsAccounts `json:"accounts" tfsdk:"accounts"`
-	Regions CloudIntegrationScopeModificationsRegions `json:"regions" tfsdk:"regions"`
+	Accounts *CloudIntegrationScopeModificationsAccounts `json:"accounts" tfsdk:"accounts"`
+	Regions *CloudIntegrationScopeModificationsRegions `json:"regions" tfsdk:"regions"`
 }
 
 type CloudIntegrationScopeModificationsAccounts struct {
@@ -213,7 +215,25 @@ type CloudIntegrationEditRequestData struct {
 	ScopeModifications CloudIntegrationScopeModifications `json:"scope_modifications"`
 }
 
-// Functions
+// Delete Integration Instance request structs
+
+type CloudIntegrationDeleteRequest struct {
+    RequestData CloudIntegrationDeleteRequestData `json:"request_data" tfsdk:"request_data"`
+}
+
+type CloudIntegrationDeleteRequestData struct {
+    Ids []string `json:"ids" tfsdk:"ids"`
+}
+
+type CloudIntegrationDeleteResponse struct {
+    Reply CloudIntegrationDeleteResponseReply `json:"reply" tfsdk:"reply"`
+}
+
+type CloudIntegrationDeleteResponseReply struct {
+
+}
+
+// Request functions
 
 func CreateTemplate(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, request CreateCloudOnboardingIntegrationTemplateRequest) (CreateCloudOnboardingIntegrationTemplateResponse, string) {
 	var response CreateCloudOnboardingIntegrationTemplateResponse
@@ -289,6 +309,21 @@ func Update(ctx context.Context, diagnostics *diag.Diagnostics, client *api.Cort
 
 	return response
 }
+
+func Delete(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, request CloudIntegrationDeleteRequest) CloudIntegrationDeleteResponse {
+	var response CloudIntegrationDeleteResponse
+
+	if err := client.Request(ctx, http.MethodPost, api.DeleteCloudIntegrationInstanceEndpoint, nil, request, &response); err != nil {
+		diagnostics.AddError(
+			"Error deleting Cloud Integration",
+			err.Error(),
+		)
+	}
+
+	return response
+}
+
+// Helper functions
 
 func createGetByInstanceIdRequest(instanceId string) CloudIntegrationInstancesRequest {
 	return CloudIntegrationInstancesRequest{
