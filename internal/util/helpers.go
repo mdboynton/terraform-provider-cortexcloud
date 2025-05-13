@@ -15,55 +15,55 @@ import (
 )
 
 // GetEnvironmentVariable retrieves the string value of the specified environment
-// variable, converts it to the type of the reciever argument, and assigns address 
-// of the converted value to reciever. 
+// variable, converts it to the type of the reciever argument, and assigns address
+// of the converted value to reciever.
 //
 // If the environment variable is not set, is set to an empty value, or is unable
 // to be converted into the reciever type, the function will exit without
 // modifying reciever and return an error.
 func GetEnvironmentVariable(name string, reciever interface{}) error {
-    value := os.Getenv(name)
-    if value == "" {
-        return nil
-    }
-    
-    switch v := reciever.(type) {
-        case *int:
-            intValue, err := strconv.Atoi(value)
-            if err != nil {
-                return err
-            }
-            *v = intValue
-            return nil
-        case *bool:
-            boolValue, err := strconv.ParseBool(value)
-            if err != nil {
-                return err
-            }
-            *v = boolValue
-            return nil
-        default:
-            return fmt.Errorf("Failed to parse %s value from environment variable: unsupported type", reflect.TypeOf(v).String())
-    }
+	value := os.Getenv(name)
+	if value == "" {
+		return nil
+	}
+
+	switch v := reciever.(type) {
+	case *int:
+		intValue, err := strconv.Atoi(value)
+		if err != nil {
+			return err
+		}
+		*v = intValue
+		return nil
+	case *bool:
+		boolValue, err := strconv.ParseBool(value)
+		if err != nil {
+			return err
+		}
+		*v = boolValue
+		return nil
+	default:
+		return fmt.Errorf("Failed to parse %s value from environment variable: unsupported type", reflect.TypeOf(v).String())
+	}
 }
 
 func IsNilOrEmpty(value *string) bool {
-    if (value == nil || *value == "") {
-        return true
-    }
-    
-    return false
+	if value == nil || *value == "" {
+		return true
+	}
+
+	return false
 }
 
 // Converts basetypes.ListValue to string slice and populates it in response
 func ListToStringSlice(ctx context.Context, l *basetypes.ListValue, response *[]string) diag.Diagnostics {
-    if (l == nil || (*l).IsNull()) {
-        return nil
-    }
+	if l == nil || (*l).IsNull() {
+		return nil
+	}
 
-    diags := l.ElementsAs(ctx, response, false)
+	diags := l.ElementsAs(ctx, response, false)
 
-    return diags 
+	return diags
 }
 
 //func StringToInt(str string) (int, diag.Diagnostic) {
@@ -76,21 +76,21 @@ func ListToStringSlice(ctx context.Context, l *basetypes.ListValue, response *[]
 //}
 
 func StringToInt(str string) (int, error) {
-    i, err := strconv.Atoi(str)
-    if err != nil {
-        return -1, err 
-    }
+	i, err := strconv.Atoi(str)
+	if err != nil {
+		return -1, err
+	}
 
-    return i, nil
+	return i, nil
 }
 
 // Returns true if s1 shares any elements with s2
 func SliceSharesOneOrMoreElements(s1 []string, s2 []string) bool {
-    for _, elem := range s1 {
-        if slices.Contains(s2, elem) {
-            return true
-        }
-    }
+	for _, elem := range s1 {
+		if slices.Contains(s2, elem) {
+			return true
+		}
+	}
 
-    return false
+	return false
 }

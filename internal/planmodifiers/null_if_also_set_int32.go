@@ -3,7 +3,7 @@ package planmodifiers
 import (
 	"context"
 	//"fmt"
-    "slices"
+	"slices"
 	////"strconv"
 	//"strings"
 
@@ -20,14 +20,13 @@ import (
 
 func NullIfAlsoSetInt32(onValues []string) planmodifier.Int32 {
 	return &nullIfAlsoSetInt32{
-		OnValues:  onValues,
+		OnValues: onValues,
 	}
 }
 
 type nullIfAlsoSetInt32 struct {
-    OnValues []string
+	OnValues []string
 }
-
 
 func (m *nullIfAlsoSetInt32) Description(ctx context.Context) string {
 	return m.MarkdownDescription(ctx)
@@ -38,13 +37,13 @@ func (m *nullIfAlsoSetInt32) MarkdownDescription(context.Context) string {
 }
 
 func (m *nullIfAlsoSetInt32) PlanModifyInt32(ctx context.Context, req planmodifier.Int32Request, resp *planmodifier.Int32Response) {
-    var attrValue basetypes.StringValue
-    resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("additional_capabilities").AtName("registry_scanning_options").AtName("type"), &attrValue)...)
-    if resp.Diagnostics.HasError() {
-        return
-    }
+	var attrValue basetypes.StringValue
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("additional_capabilities").AtName("registry_scanning_options").AtName("type"), &attrValue)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-    if slices.Contains(m.OnValues, attrValue.ValueString()) {
-        resp.PlanValue = types.Int32Null()
-    }
+	if slices.Contains(m.OnValues, attrValue.ValueString()) {
+		resp.PlanValue = types.Int32Null()
+	}
 }

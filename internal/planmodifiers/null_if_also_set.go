@@ -97,7 +97,7 @@ package planmodifiers
 //}
 //
 //func (m NullIfAlsoSetPlanModifier) PlanModify(ctx context.Context, req NullIfAlsoSetPlanModifierRequest, resp *NullIfAlsoSetPlanModifierResponse) {
-//	
+//
 //
 //    expressions := req.PathExpression.MergeExpressions(m.PathExpressions...)
 //
@@ -119,7 +119,7 @@ package planmodifiers
 //
 //            var mpVal attr.Value
 //            resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, mp, &mpVal)...)
-//          
+//
 //            switch mpVal.Type(ctx) {
 //                case types.StringType:
 //                    req.PlanValue = types.StringNull()
@@ -190,7 +190,7 @@ package planmodifiers
 //
 //// ValidateString implements validator.String.
 //func (m NullIfAlsoSetPlanModifier) PlanModifyInt32(ctx context.Context, req planmodifier.Int32Request, resp *planmodifier.Int32Response) {
-//     
+//
 //
 //	for _, value := range v.OnStringValues {
 //		if value == req.ConfigValue.ValueInt32() {
@@ -230,7 +230,7 @@ package planmodifiers
 ////
 ////            var mpVal attr.Value
 ////            resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, mp, &mpVal)...)
-////          
+////
 ////            switch mpVal.Type(ctx) {
 ////                case types.StringType:
 ////                    req.PlanValue = types.StringNull()

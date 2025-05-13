@@ -1,28 +1,28 @@
 package validators
 
 import (
-    "context"
-    "fmt"
-    "strings"
+	"context"
+	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/helpers/validatordiag"
-    "github.com/hashicorp/terraform-plugin-framework/schema/validator"
-    "github.com/hashicorp/terraform-plugin-framework/attr"
-    "github.com/hashicorp/terraform-plugin-framework/path"
-    "github.com/hashicorp/terraform-plugin-framework/diag"
-    "github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 )
 
 var (
 	_ validator.String = AlsoRequiresOnValuesValidator{}
 	_ validator.Bool   = AlsoRequiresOnValuesValidator{}
-    //_ validator.Int32
+	//_ validator.Int32
 )
 
 type AlsoRequiresOnValuesValidator struct {
-    OnStringValues []string
-    OnBoolValues []bool
-    PathExpressions path.Expressions
+	OnStringValues  []string
+	OnBoolValues    []bool
+	PathExpressions path.Expressions
 }
 
 type AlsoRequiresOnValuesValidatorRequest struct {
@@ -38,29 +38,29 @@ type AlsoRequiresOnValuesValidatorResponse struct {
 }
 
 func AlsoRequiresOnStringValues(onValues []string, expressions ...path.Expression) validator.String {
-    return AlsoRequiresOnValuesValidator{
-        OnStringValues: onValues,
-        PathExpressions: expressions,
-    }
+	return AlsoRequiresOnValuesValidator{
+		OnStringValues:  onValues,
+		PathExpressions: expressions,
+	}
 }
 
 func AlsoRequiresOnBoolValues(onValues []bool, expressions ...path.Expression) validator.Bool {
-    return AlsoRequiresOnValuesValidator{
-        OnBoolValues: onValues,
-        PathExpressions: expressions,
-    }
+	return AlsoRequiresOnValuesValidator{
+		OnBoolValues:    onValues,
+		PathExpressions: expressions,
+	}
 }
 
 func (v AlsoRequiresOnValuesValidator) MarkdownDescription(ctx context.Context) string {
-    return "TODO"
+	return "TODO"
 }
 
 func (v AlsoRequiresOnValuesValidator) Description(ctx context.Context) string {
-    return v.MarkdownDescription(ctx)
+	return v.MarkdownDescription(ctx)
 }
 
 func (v AlsoRequiresOnValuesValidator) Validate(ctx context.Context, req AlsoRequiresOnValuesValidatorRequest, resp *AlsoRequiresOnValuesValidatorResponse) {
-    if req.ConfigValue.IsNull() {
+	if req.ConfigValue.IsNull() {
 		return
 	}
 

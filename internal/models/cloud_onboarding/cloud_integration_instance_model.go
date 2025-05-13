@@ -1,9 +1,9 @@
-package models 
+package models
 
 import (
-    "context"
+	"context"
+	"fmt"
 	"time"
-    "fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -32,11 +32,11 @@ type CloudIntegrationInstanceModel struct {
 }
 
 func (m *CloudIntegrationInstanceModel) ToCreateRequest(ctx context.Context, diagnostics *diag.Diagnostics) api.CreateCloudOnboardingIntegrationTemplateRequest {
-    nullAsEmptyOpts := basetypes.ObjectAsOptions{
-        UnhandledNullAsEmpty: true,
-    }
-   
-    accountDetails := api.CloudIntegrationAccountDetails{}
+	nullAsEmptyOpts := basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty: true,
+	}
+
+	accountDetails := api.CloudIntegrationAccountDetails{}
 	diagnostics.Append(m.AccountDetails.As(ctx, &accountDetails, nullAsEmptyOpts)...)
 
 	additionalCapabilities := api.CloudIntegrationAdditionalCapabilities{}
@@ -55,7 +55,7 @@ func (m *CloudIntegrationInstanceModel) ToCreateRequest(ctx context.Context, dia
 		return api.CreateCloudOnboardingIntegrationTemplateRequest{}
 	}
 
-    request := api.CreateCloudOnboardingIntegrationTemplateRequest{
+	request := api.CreateCloudOnboardingIntegrationTemplateRequest{
 		RequestData: api.CreateCloudOnboardingIntegrationTemplateRequestData{
 			AdditionalCapabilities:  additionalCapabilities,
 			CloudProvider:           m.CloudProvider.ValueString(),
@@ -68,19 +68,19 @@ func (m *CloudIntegrationInstanceModel) ToCreateRequest(ctx context.Context, dia
 		},
 	}
 
-    if !m.AccountDetails.IsNull() {
-        request.RequestData.AccountDetails = &accountDetails
-    } else {
-        request.RequestData.AccountDetails = nil
-    }
+	if !m.AccountDetails.IsNull() {
+		request.RequestData.AccountDetails = &accountDetails
+	} else {
+		request.RequestData.AccountDetails = nil
+	}
 
-    return request
+	return request
 }
 
 func (m *CloudIntegrationInstanceModel) ToUpdateRequest(ctx context.Context, diagnostics *diag.Diagnostics) api.CloudIntegrationEditRequest {
 	additionalCapabilities := api.CloudIntegrationAdditionalCapabilities{}
 	diagnostics.Append(m.AdditionalCapabilities.As(ctx, &additionalCapabilities, basetypes.ObjectAsOptions{})...)
-	
+
 	collectionConfiguration := api.CloudIntegrationCollectionConfiguration{}
 	diagnostics.Append(m.CollectionConfiguration.As(ctx, &collectionConfiguration, basetypes.ObjectAsOptions{})...)
 
@@ -90,8 +90,8 @@ func (m *CloudIntegrationInstanceModel) ToUpdateRequest(ctx context.Context, dia
 	scopeModifications := api.CloudIntegrationScopeModifications{}
 	diagnostics.Append(m.ScopeModifications.As(ctx, &scopeModifications, basetypes.ObjectAsOptions{})...)
 
-    tflog.Debug(ctx, fmt.Sprintf("\n\nmodel: %+v\n\n", *m))
-    tflog.Debug(ctx, fmt.Sprintf("\n\ninstance_id: %s\noutpost_id: %s\n\n", m.InstanceId.ValueString(), m.OutpostId.ValueString()))
+	tflog.Debug(ctx, fmt.Sprintf("\n\nmodel: %+v\n\n", *m))
+	tflog.Debug(ctx, fmt.Sprintf("\n\ninstance_id: %s\noutpost_id: %s\n\n", m.InstanceId.ValueString(), m.OutpostId.ValueString()))
 
 	if diagnostics.HasError() {
 		return api.CloudIntegrationEditRequest{}
@@ -106,17 +106,17 @@ func (m *CloudIntegrationInstanceModel) ToUpdateRequest(ctx context.Context, dia
 			InstanceId:              m.InstanceId.ValueString(),
 			InstanceName:            m.InstanceName.ValueString(),
 			ScopeModifications:      scopeModifications,
-            ScanEnvId:               m.OutpostId.ValueString(),
+			ScanEnvId:               m.OutpostId.ValueString(),
 		},
 	}
 }
 
 func (m *CloudIntegrationInstanceModel) ToDeleteRequest(ctx context.Context, diagnostics *diag.Diagnostics) api.CloudIntegrationDeleteRequest {
-    return api.CloudIntegrationDeleteRequest{
-        RequestData: api.CloudIntegrationDeleteRequestData{
-            Ids: []string{ m.InstanceId.ValueString() },
-        },
-    }
+	return api.CloudIntegrationDeleteRequest{
+		RequestData: api.CloudIntegrationDeleteRequestData{
+			Ids: []string{m.InstanceId.ValueString()},
+		},
+	}
 }
 
 func (m *CloudIntegrationInstanceModel) RefreshPropertyValues(diagnostics *diag.Diagnostics, response api.CloudIntegrationInstancesResponse, instanceId, cloudFormationLink *string) {

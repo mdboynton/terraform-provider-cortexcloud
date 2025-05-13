@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api"
-	cloudIntegrationResources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/resources/cloud_onboarding/cloud_integration"
 	appSecResources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/resources/application_security"
+	cloudIntegrationResources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/resources/cloud_onboarding/cloud_integration"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -27,12 +27,12 @@ const (
 	InsecureEnvVar             = "CORTEX_TF_INSECURE"
 	RequestTimeoutEnvVar       = "CORTEX_TF_REQUEST_TIMEOUT"
 	RequestRetryIntervalEnvVar = "CORTEX_TF_REQUEST_RETRY_INTERVAL"
-    CrashStackDirEnvVar        = "CORTEX_TF_CRASH_STACK_DIR"
+	CrashStackDirEnvVar        = "CORTEX_TF_CRASH_STACK_DIR"
 
 	InsecureDefault             = false
 	RequestTimeoutDefault       = 60
 	RequestRetryIntervalDefault = 3
-    CrashStackDirDefault        = ""
+	CrashStackDirDefault        = ""
 )
 
 var (
@@ -52,13 +52,13 @@ type CortexCloudProvider struct {
 }
 
 type CortexCloudProviderModel struct {
-	ApiUrl                  types.String `tfsdk:"api_url"`
-	ApiKey                  types.String `tfsdk:"api_key"`
-	ApiKeyId                types.Int32  `tfsdk:"api_key_id"`
-	Insecure                types.Bool   `tfsdk:"insecure"`
-	RequestTimeout          types.Int32  `tfsdk:"request_timeout"`
-	RequestRetryInterval    types.Int32  `tfsdk:"request_retry_interval"`
-    CrashStackDir           types.String `tfsdk:"crash_stack_dir"`
+	ApiUrl               types.String `tfsdk:"api_url"`
+	ApiKey               types.String `tfsdk:"api_key"`
+	ApiKeyId             types.Int32  `tfsdk:"api_key_id"`
+	Insecure             types.Bool   `tfsdk:"insecure"`
+	RequestTimeout       types.Int32  `tfsdk:"request_timeout"`
+	RequestRetryInterval types.Int32  `tfsdk:"request_retry_interval"`
+	CrashStackDir        types.String `tfsdk:"crash_stack_dir"`
 }
 
 func (p *CortexCloudProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
@@ -116,13 +116,13 @@ func (p *CortexCloudProvider) Schema(ctx context.Context, req provider.SchemaReq
 				Optional: true,
 				Description: "The location on the filesystem where the crash stack " +
 					"contents will be written in the event of the provider encountering " +
-                    "an unexpected error. If omitted, the default value is an empty " +
-                    "string, which will be interpreted as `$TMPDIR` on Unix systems (or " +
-                    "`/tmp` if `$TMPDIR` is empty). On Windows systems, an empty string " +
-                    "will be interpreted as the the first of the following values that is " +
-                    "non-empty, in order of evaluation: `%%TMP%%`, `%%TEMP%%`, " +
-                    "%%USERPROFILE%%`, or the Windows directory. Can also be configured " +
-                    "using the `CORTEX_TF_CRASH_STACK_DIR` environment variable.",
+					"an unexpected error. If omitted, the default value is an empty " +
+					"string, which will be interpreted as `$TMPDIR` on Unix systems (or " +
+					"`/tmp` if `$TMPDIR` is empty). On Windows systems, an empty string " +
+					"will be interpreted as the the first of the following values that is " +
+					"non-empty, in order of evaluation: `%%TMP%%`, `%%TEMP%%`, " +
+					"%%USERPROFILE%%`, or the Windows directory. Can also be configured " +
+					"using the `CORTEX_TF_CRASH_STACK_DIR` environment variable.",
 			},
 		},
 	}
@@ -195,7 +195,7 @@ func (p *CortexCloudProvider) Metadata(_ context.Context, _ provider.MetadataReq
 func (p *CortexCloudProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		cloudIntegrationResources.NewCloudIntegrationInstanceResource,
-        appSecResources.NewApplicationSecurityRuleResource,
+		appSecResources.NewApplicationSecurityRuleResource,
 	}
 }
 
@@ -208,7 +208,7 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 
 	var (
 		apiConfig api.CortexCloudAPIClientConfig
-		diags  diag.Diagnostics
+		diags     diag.Diagnostics
 	)
 
 	//if p.version == "test" {

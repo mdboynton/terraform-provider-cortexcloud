@@ -19,7 +19,7 @@ type CreateCloudOnboardingIntegrationTemplateRequest struct {
 }
 
 type CreateCloudOnboardingIntegrationTemplateRequestData struct {
-    AccountDetails          *CloudIntegrationAccountDetails `json:"account_details,omitempty"`
+	AccountDetails          *CloudIntegrationAccountDetails         `json:"account_details,omitempty"`
 	AdditionalCapabilities  CloudIntegrationAdditionalCapabilities  `json:"additional_capabilities"`
 	CloudProvider           string                                  `json:"cloud_provider"`
 	CollectionConfiguration CloudIntegrationCollectionConfiguration `json:"collection_configuration"`
@@ -32,7 +32,7 @@ type CreateCloudOnboardingIntegrationTemplateRequestData struct {
 }
 
 type CloudIntegrationAccountDetails struct {
-    OrganizationId string `json:"organization_id" tfsdk:"organization_id"`
+	OrganizationId string `json:"organization_id" tfsdk:"organization_id"`
 }
 
 type CloudIntegrationAdditionalCapabilities struct {
@@ -44,8 +44,8 @@ type CloudIntegrationAdditionalCapabilities struct {
 }
 
 type CloudIntegrationRegistryScanningOptions struct {
-	Type string `json:"type" tfsdk:"type"`
-	LastDays *int `json:"last_days,omitempty" tfsdk:"last_days"`
+	Type     string `json:"type" tfsdk:"type"`
+	LastDays *int   `json:"last_days,omitempty" tfsdk:"last_days"`
 }
 
 type CloudIntegrationCollectionConfiguration struct {
@@ -63,7 +63,7 @@ type CloudIntegrationCustomResourcesTag struct {
 
 type CloudIntegrationScopeModifications struct {
 	Accounts *CloudIntegrationScopeModificationsAccounts `json:"accounts" tfsdk:"accounts"`
-	Regions *CloudIntegrationScopeModificationsRegions `json:"regions" tfsdk:"regions"`
+	Regions  *CloudIntegrationScopeModificationsRegions  `json:"regions" tfsdk:"regions"`
 }
 
 type CloudIntegrationScopeModificationsAccounts struct {
@@ -225,10 +225,10 @@ type CloudIntegrationEditRequestData struct {
 	CollectionConfiguration CloudIntegrationCollectionConfiguration `json:"collection_configuration"`
 	CustomResourcesTags     []CloudIntegrationCustomResourcesTag    `json:"custom_resources_tags"`
 	//InstanceId              string                                  `json:"instance_id" tfsdk:"instance_id"`
-	InstanceId              string                                  `json:"id" tfsdk:"instance_id"`
-	ScanEnvId               string                                  `json:"scan_env_id" tfsdk:"scan_env_id"`
-	InstanceName            string                                  `json:"instance_name" tfsdk:"instance_name"`
-	ScopeModifications      CloudIntegrationScopeModifications      `json:"scope_modifications"`
+	InstanceId         string                             `json:"id" tfsdk:"instance_id"`
+	ScanEnvId          string                             `json:"scan_env_id" tfsdk:"scan_env_id"`
+	InstanceName       string                             `json:"instance_name" tfsdk:"instance_name"`
+	ScopeModifications CloudIntegrationScopeModifications `json:"scope_modifications"`
 }
 
 // *********************************************************
@@ -236,11 +236,11 @@ type CloudIntegrationEditRequestData struct {
 // *********************************************************
 
 type CloudIntegrationDeleteRequest struct {
-    RequestData CloudIntegrationDeleteRequestData `json:"request_data" tfsdk:"request_data"`
+	RequestData CloudIntegrationDeleteRequestData `json:"request_data" tfsdk:"request_data"`
 }
 
 type CloudIntegrationDeleteRequestData struct {
-    Ids []string `json:"ids" tfsdk:"ids"`
+	Ids []string `json:"ids" tfsdk:"ids"`
 }
 
 // *********************************************************
@@ -248,11 +248,10 @@ type CloudIntegrationDeleteRequestData struct {
 // *********************************************************
 
 type CloudIntegrationDeleteResponse struct {
-    Reply CloudIntegrationDeleteResponseReply `json:"reply" tfsdk:"reply"`
+	Reply CloudIntegrationDeleteResponseReply `json:"reply" tfsdk:"reply"`
 }
 
 type CloudIntegrationDeleteResponseReply struct {
-
 }
 
 // *********************************************************
@@ -269,15 +268,15 @@ func CreateTemplate(ctx context.Context, diagnostics *diag.Diagnostics, client *
 		)
 	}
 
-    templateUrl, err := getCloudFormationTemplateUrl(response.Reply.Automated.Link)
-    if err != nil {
+	templateUrl, err := getCloudFormationTemplateUrl(response.Reply.Automated.Link)
+	if err != nil {
 		diagnostics.AddError(
 			"Error creating Cloud Onboarding Integration Template",
-            fmt.Sprintf("Failed to parse CloudFormation template URL from API response: %s", err.Error()),
+			fmt.Sprintf("Failed to parse CloudFormation template URL from API response: %s", err.Error()),
 		)
-    }
+	}
 
-	return response, templateUrl 
+	return response, templateUrl
 }
 
 func Get(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, request CloudIntegrationInstancesRequest) CloudIntegrationInstancesResponse {
@@ -296,7 +295,7 @@ func Get(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexC
 func GetByInstanceId(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, instanceId string) CloudIntegrationInstancesResponse {
 	var response CloudIntegrationInstancesResponse
 
-    requestuest := createGetByInstanceIdRequest(instanceId)
+	requestuest := createGetByInstanceIdRequest(instanceId)
 
 	if err := client.Request(ctx, "POST", api.GetCloudIntegrationInstancesEndpoint, nil, requestuest, &response); err != nil {
 		diagnostics.AddError(
@@ -366,13 +365,12 @@ func createGetByInstanceIdRequest(instanceId string) CloudIntegrationInstancesRe
 				},
 				Paging: CloudIntegrationInstancesPaging{
 					From: 0,
-					To: 1000,
+					To:   1000,
 				},
 			},
 		},
 	}
 }
-
 
 func getCloudFormationTemplateUrl(responseUrl string) (string, error) {
 	var cloudFormationTemplateUrl string

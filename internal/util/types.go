@@ -15,8 +15,8 @@ import (
 )
 
 type PolicyRuleOrderMapTuple struct {
-    Order int
-    Position int
+	Order    int
+	Position int
 }
 
 type ModelWithAttributes interface {
