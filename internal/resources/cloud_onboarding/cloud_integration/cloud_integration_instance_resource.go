@@ -19,9 +19,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
+	//"github.com/hashicorp/terraform-plugin-log/tflog"
 
-	//"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -219,7 +218,6 @@ func (r *CloudIntegrationInstanceResource) Schema(ctx context.Context, req resou
                 Default: stringdefault.StaticString(""),
 			},
 			"scan_mode": schema.StringAttribute{
-				// TODO: include warning about additional costs when using outpost
                 // TODO: add description of outpost
                 // TODO: verify that an outpost id is specified if set to MANAGED
                 // TODO: find out how to get the default outpost id
@@ -316,6 +314,13 @@ func (r *CloudIntegrationInstanceResource) Schema(ctx context.Context, req resou
 							//    ElementType: types.StringType,
 							//},
 						},
+                        Default: objectdefault.StaticValue(
+                            types.ObjectNull(
+                                map[string]attr.Type{
+                                    "enabled": types.BoolType,
+                                },
+                            ),
+                        ),
 					},
 				},
 			},
@@ -503,11 +508,22 @@ func (r *CloudIntegrationInstanceResource) Delete(ctx context.Context, req resou
 		return
 	}
 
-    // Retrieve integration details from API
+    // Retrieve integration details from API and print warning if the 
+    // integration still appears in the results
     integrationDetails := cloudIntegrationAPI.GetByInstanceId(ctx, &resp.Diagnostics, r.client, state.InstanceName.ValueString())
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-    tflog.Debug(ctx, fmt.Sprintf("integration details: \n\n%+v", integrationDetails))
+    if len(integrationDetails.Reply.Data) > 0 {
+        resp.Diagnostics.AddWarning(
+            "Resource Not Deleted",
+            "Terraform resource has been destroyed, but integration still " +
+            "exists in Cortex. This may occur when deleting integrations " +
+            "that are in the PENDING state. Navigate to the Data Sources " +
+            "menu in the Cortex UI and search for your integration to " +
+            "confirm that it has been deleted, or manually delete it if " +
+            "not.",
+        )
+    }
 }
