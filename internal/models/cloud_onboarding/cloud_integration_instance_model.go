@@ -3,10 +3,12 @@ package models
 import (
     "context"
 	"time"
+    "fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	api "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api/cloud_onboarding/cloud_integration"
 )
@@ -88,6 +90,9 @@ func (m *CloudIntegrationInstanceModel) ToUpdateRequest(ctx context.Context, dia
 	scopeModifications := api.CloudIntegrationScopeModifications{}
 	diagnostics.Append(m.ScopeModifications.As(ctx, &scopeModifications, basetypes.ObjectAsOptions{})...)
 
+    tflog.Debug(ctx, fmt.Sprintf("\n\nmodel: %+v\n\n", *m))
+    tflog.Debug(ctx, fmt.Sprintf("\n\ninstance_id: %s\noutpost_id: %s\n\n", m.InstanceId.ValueString(), m.OutpostId.ValueString()))
+
 	if diagnostics.HasError() {
 		return api.CloudIntegrationEditRequest{}
 	}
@@ -101,6 +106,7 @@ func (m *CloudIntegrationInstanceModel) ToUpdateRequest(ctx context.Context, dia
 			InstanceId:              m.InstanceId.ValueString(),
 			InstanceName:            m.InstanceName.ValueString(),
 			ScopeModifications:      scopeModifications,
+            ScanEnvId:               m.OutpostId.ValueString(),
 		},
 	}
 }

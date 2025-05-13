@@ -11,8 +11,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 )
 
-// Create Cloud Onboarding Integration Template request structs
-
+// *********************************************************
+// CREATE request structs
+// *********************************************************
 type CreateCloudOnboardingIntegrationTemplateRequest struct {
 	RequestData CreateCloudOnboardingIntegrationTemplateRequestData `json:"request_data"`
 }
@@ -73,7 +74,9 @@ type CloudIntegrationScopeModificationsRegions struct {
 	Enabled bool `json:"enabled" tfsdk:"enabled"`
 }
 
-// Create Cloud Onboarding Integration Template response structs
+// *********************************************************
+// CREATE response structs
+// *********************************************************
 
 type CreateCloudOnboardingIntegrationTemplateResponse struct {
 	Reply CreateCloudOnboardingIntegrationTemplateReply `json:"reply" tfsdk:"reply"`
@@ -94,7 +97,9 @@ type CreateCloudOnboardingIntegrationTemplateManual struct {
 	CF string `json:"CF" tfsdk:"tf_arm"`
 }
 
-// Get Instances request structs
+// *********************************************************
+// GET INSTANCES request structs
+// *********************************************************
 
 type CloudIntegrationInstancesRequest struct {
 	RequestData CloudIntegrationInstancesRequestData `json:"request_data" tfsdk:"request_data"`
@@ -130,7 +135,9 @@ type CloudIntegrationInstancesAndFilter struct {
 	SearchValue string `json:"SEARCH_VALUE" tfsdk:"search_value"`
 }
 
-// Get Instances response structs
+// *********************************************************
+// GET INSTANCES response structs
+// *********************************************************
 
 type CloudIntegrationInstancesResponse struct {
 	Reply CloudIntegrationInstancesResponseReply `json:"reply" tfsdk:"reply"`
@@ -160,7 +167,9 @@ type CloudIntegrationInstancesResponseData struct {
 	//CollectionConfiguration string `json:"collection_configuration" tfsdk:"collection_configuration"`
 }
 
-// Get Instance Details request structs
+// *********************************************************
+// GET INSTANCE DETAILS request structs
+// *********************************************************
 
 type CloudIntegrationInstanceDetailsRequest struct {
 	RequestData CloudIntegrationInstanceDetailsRequestData `json:"request_data" tfsdk:"request_data"`
@@ -169,6 +178,10 @@ type CloudIntegrationInstanceDetailsRequest struct {
 type CloudIntegrationInstanceDetailsRequestData struct {
 	InstanceId string `json:"id" tfsdk:"instance_id"`
 }
+
+// *********************************************************
+// GET INSTANCE DETAILS response structs
+// *********************************************************
 
 type CloudIntegrationInstanceDetailsResponse struct {
 	Reply CloudIntegrationInstanceDetailsResponseData `json:"reply" tfsdk:"reply"`
@@ -198,7 +211,9 @@ type CloudIntegrationInstanceDetailsSecurityCapability struct {
 	Status      string `json:"status" tfsdk:"status"`
 }
 
-// Edit Integration Instance request structs
+// *********************************************************
+// EDIT request structs
+// *********************************************************
 
 type CloudIntegrationEditRequest struct {
 	RequestData CloudIntegrationEditRequestData `json:"request_data" tfsdk:"request_data"`
@@ -209,13 +224,16 @@ type CloudIntegrationEditRequestData struct {
 	CloudProvider           string                                  `json:"cloud_provider"`
 	CollectionConfiguration CloudIntegrationCollectionConfiguration `json:"collection_configuration"`
 	CustomResourcesTags     []CloudIntegrationCustomResourcesTag    `json:"custom_resources_tags"`
-	InstanceId              string                                  `json:"instance_id" tfsdk:"instance_id"`
-	//ScanEnvId string `json:"instance_id" tfsdk:"instance_id"`
-	InstanceName       string                             `json:"instance_name" tfsdk:"instance_name"`
-	ScopeModifications CloudIntegrationScopeModifications `json:"scope_modifications"`
+	//InstanceId              string                                  `json:"instance_id" tfsdk:"instance_id"`
+	InstanceId              string                                  `json:"id" tfsdk:"instance_id"`
+	ScanEnvId               string                                  `json:"scan_env_id" tfsdk:"scan_env_id"`
+	InstanceName            string                                  `json:"instance_name" tfsdk:"instance_name"`
+	ScopeModifications      CloudIntegrationScopeModifications      `json:"scope_modifications"`
 }
 
-// Delete Integration Instance request structs
+// *********************************************************
+// DELETE request structs
+// *********************************************************
 
 type CloudIntegrationDeleteRequest struct {
     RequestData CloudIntegrationDeleteRequestData `json:"request_data" tfsdk:"request_data"`
@@ -225,6 +243,10 @@ type CloudIntegrationDeleteRequestData struct {
     Ids []string `json:"ids" tfsdk:"ids"`
 }
 
+// *********************************************************
+// DELETE response structs
+// *********************************************************
+
 type CloudIntegrationDeleteResponse struct {
     Reply CloudIntegrationDeleteResponseReply `json:"reply" tfsdk:"reply"`
 }
@@ -233,7 +255,9 @@ type CloudIntegrationDeleteResponseReply struct {
 
 }
 
+// *********************************************************
 // Request functions
+// *********************************************************
 
 func CreateTemplate(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, request CreateCloudOnboardingIntegrationTemplateRequest) (CreateCloudOnboardingIntegrationTemplateResponse, string) {
 	var response CreateCloudOnboardingIntegrationTemplateResponse
@@ -323,7 +347,9 @@ func Delete(ctx context.Context, diagnostics *diag.Diagnostics, client *api.Cort
 	return response
 }
 
+// *********************************************************
 // Helper functions
+// *********************************************************
 
 func createGetByInstanceIdRequest(instanceId string) CloudIntegrationInstancesRequest {
 	return CloudIntegrationInstancesRequest{
