@@ -261,7 +261,7 @@ type CloudIntegrationDeleteResponseReply struct {
 func CreateTemplate(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, request CreateCloudOnboardingIntegrationTemplateRequest) (CreateCloudOnboardingIntegrationTemplateResponse, string) {
 	var response CreateCloudOnboardingIntegrationTemplateResponse
 
-	if err := client.Request(ctx, "POST", api.CreateCloudOnboardingIntegrationTemplateEndpoint, nil, request, &response); err != nil {
+	if err := client.Request(ctx, http.MethodPost, api.CreateCloudOnboardingIntegrationTemplateEndpoint, nil, request, &response); err != nil {
 		diagnostics.AddError(
 			"Error creating Cloud Onboarding Integration Template",
 			err.Error(),
@@ -282,7 +282,7 @@ func CreateTemplate(ctx context.Context, diagnostics *diag.Diagnostics, client *
 func Get(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, request CloudIntegrationInstancesRequest) CloudIntegrationInstancesResponse {
 	var response CloudIntegrationInstancesResponse
 
-	if err := client.Request(ctx, "POST", api.GetCloudIntegrationInstancesEndpoint, nil, request, &response); err != nil {
+	if err := client.Request(ctx, http.MethodPost, api.GetCloudIntegrationInstancesEndpoint, nil, request, &response); err != nil {
 		diagnostics.AddError(
 			"Error retrieving Cloud Integrations",
 			err.Error(),
@@ -295,9 +295,24 @@ func Get(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexC
 func GetByInstanceId(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, instanceId string) CloudIntegrationInstancesResponse {
 	var response CloudIntegrationInstancesResponse
 
-	requestuest := createGetByInstanceIdRequest(instanceId)
+	request := createGetByInstanceIdRequest(instanceId)
 
-	if err := client.Request(ctx, "POST", api.GetCloudIntegrationInstancesEndpoint, nil, requestuest, &response); err != nil {
+	if err := client.Request(ctx, http.MethodPost, api.GetCloudIntegrationInstancesEndpoint, nil, request, &response); err != nil {
+		diagnostics.AddError(
+			"Error retrieving Cloud Integrations",
+			err.Error(),
+		)
+	}
+
+	return response
+}
+
+func GetCloudFormationDeploymentByInstanceName(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, instanceName string) CloudIntegrationInstancesResponse {
+	var response CloudIntegrationInstancesResponse
+
+	request := createGetCloudFormationDeploymentByInstanceIdRequest(instanceName)
+
+	if err := client.Request(ctx, http.MethodPost, api.GetCloudIntegrationInstancesEndpoint, nil, request, &response); err != nil {
 		diagnostics.AddError(
 			"Error retrieving Cloud Integrations",
 			err.Error(),
@@ -310,7 +325,7 @@ func GetByInstanceId(ctx context.Context, diagnostics *diag.Diagnostics, client 
 func GetDetails(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, request CloudIntegrationInstanceDetailsRequest) CloudIntegrationInstanceDetailsResponse {
 	var response CloudIntegrationInstanceDetailsResponse
 
-	if err := client.Request(ctx, "POST", api.GetCloudIntegrationInstanceDetailsEndpoint, nil, request, &response); err != nil {
+	if err := client.Request(ctx, http.MethodPost, api.GetCloudIntegrationInstanceDetailsEndpoint, nil, request, &response); err != nil {
 		diagnostics.AddError(
 			"Error retrieving Cloud Integrations by instance ID",
 			err.Error(),
@@ -323,7 +338,7 @@ func GetDetails(ctx context.Context, diagnostics *diag.Diagnostics, client *api.
 func Update(ctx context.Context, diagnostics *diag.Diagnostics, client *api.CortexCloudAPIClient, request CloudIntegrationEditRequest) CreateCloudOnboardingIntegrationTemplateResponse {
 	var response CreateCloudOnboardingIntegrationTemplateResponse
 
-	if err := client.Request(ctx, "POST", api.EditCloudIntegrationInstanceTemplateEndpoint, nil, request, &response); err != nil {
+	if err := client.Request(ctx, http.MethodPost, api.EditCloudIntegrationInstanceTemplateEndpoint, nil, request, &response); err != nil {
 		diagnostics.AddError(
 			"Error updating Cloud Onboarding Integration Template",
 			err.Error(),
@@ -360,6 +375,33 @@ func createGetByInstanceIdRequest(instanceId string) CloudIntegrationInstancesRe
 							SearchField: "ID",
 							SearchType:  "EQ",
 							SearchValue: instanceId,
+						},
+					},
+				},
+				Paging: CloudIntegrationInstancesPaging{
+					From: 0,
+					To:   1000,
+				},
+			},
+		},
+	}
+}
+
+func createGetCloudFormationDeploymentByInstanceIdRequest(instanceId string) CloudIntegrationInstancesRequest {
+	return CloudIntegrationInstancesRequest{
+		RequestData: CloudIntegrationInstancesRequestData{
+			FilterData: CloudIntegrationInstancesFilterData{
+				Filter: CloudIntegrationInstancesFilter{
+					And: []CloudIntegrationInstancesAndFilter{
+						{
+							SearchField: "ID",
+							SearchType:  "EQ",
+							SearchValue: instanceId,
+						},
+						{
+							SearchField: "PROVISIONING_METHOD",
+							SearchType:  "EQ",
+							SearchValue: "CF",
 						},
 					},
 				},

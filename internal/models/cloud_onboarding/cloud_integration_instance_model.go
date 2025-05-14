@@ -2,13 +2,13 @@ package models
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
+
+	//"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	api "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api/cloud_onboarding/cloud_integration"
 )
@@ -29,6 +29,7 @@ type CloudIntegrationInstanceModel struct {
 	OutpostId               types.String `tfsdk:"outpost_id"`
 	CreationTime            types.String `tfsdk:"creation_time"`
 	CloudFormationLink      types.String `tfsdk:"cloud_formation_link"`
+	TemplateInstanceId      types.String `tfsdk:"template_instance_id"`
 }
 
 func (m *CloudIntegrationInstanceModel) ToCreateRequest(ctx context.Context, diagnostics *diag.Diagnostics) api.CreateCloudOnboardingIntegrationTemplateRequest {
@@ -77,6 +78,55 @@ func (m *CloudIntegrationInstanceModel) ToCreateRequest(ctx context.Context, dia
 	return request
 }
 
+func (m *CloudIntegrationInstanceModel) ToGetRequest(ctx context.Context, diagnostics *diag.Diagnostics, instanceId *string) api.CloudIntegrationInstancesRequest {
+	var _instanceId string
+	if instanceId != nil {
+		_instanceId = *instanceId
+	} else {
+		_instanceId = m.InstanceId.ValueString()
+	}
+
+	andFilters := []api.CloudIntegrationInstancesAndFilter{
+		{
+			SearchField: "ID",
+			SearchType:  "EQ",
+			SearchValue: _instanceId,
+		},
+	}
+
+	// Check if the status attribute is null or unknown
+	statusIsNullOrUnknown := (m.Status.IsNull() || m.Status.IsUnknown())
+	if statusIsNullOrUnknown {
+		andFilters = append(andFilters, api.CloudIntegrationInstancesAndFilter{
+			SearchField: "STATUS",
+			SearchType:  "EQ",
+			SearchValue: "PENDING",
+		})
+	} else {
+		if m.CloudProvider.ValueString() == CloudIntegrationCloudProviderEnumAws {
+			andFilters = append(andFilters, api.CloudIntegrationInstancesAndFilter{
+				SearchField: "PROVISIONING_METHOD",
+				SearchType:  "EQ",
+				SearchValue: "CF",
+			})
+		}
+	}
+
+	return api.CloudIntegrationInstancesRequest{
+		RequestData: api.CloudIntegrationInstancesRequestData{
+			FilterData: api.CloudIntegrationInstancesFilterData{
+				Filter: api.CloudIntegrationInstancesFilter{
+					And: andFilters,
+				},
+				Paging: api.CloudIntegrationInstancesPaging{
+					From: 0,
+					To:   1000,
+				},
+			},
+		},
+	}
+}
+
 func (m *CloudIntegrationInstanceModel) ToUpdateRequest(ctx context.Context, diagnostics *diag.Diagnostics) api.CloudIntegrationEditRequest {
 	additionalCapabilities := api.CloudIntegrationAdditionalCapabilities{}
 	diagnostics.Append(m.AdditionalCapabilities.As(ctx, &additionalCapabilities, basetypes.ObjectAsOptions{})...)
@@ -89,9 +139,6 @@ func (m *CloudIntegrationInstanceModel) ToUpdateRequest(ctx context.Context, dia
 
 	scopeModifications := api.CloudIntegrationScopeModifications{}
 	diagnostics.Append(m.ScopeModifications.As(ctx, &scopeModifications, basetypes.ObjectAsOptions{})...)
-
-	tflog.Debug(ctx, fmt.Sprintf("\n\nmodel: %+v\n\n", *m))
-	tflog.Debug(ctx, fmt.Sprintf("\n\ninstance_id: %s\noutpost_id: %s\n\n", m.InstanceId.ValueString(), m.OutpostId.ValueString()))
 
 	if diagnostics.HasError() {
 		return api.CloudIntegrationEditRequest{}
@@ -119,7 +166,10 @@ func (m *CloudIntegrationInstanceModel) ToDeleteRequest(ctx context.Context, dia
 	}
 }
 
-func (m *CloudIntegrationInstanceModel) RefreshPropertyValues(diagnostics *diag.Diagnostics, response api.CloudIntegrationInstancesResponse, instanceId, cloudFormationLink *string) {
+// func (m *CloudIntegrationInstanceModel) RefreshPropertyValues(diagnostics *diag.Diagnostics, response api.CloudIntegrationInstancesResponse, instanceId, cloudFormationLink *string) {
+// TEMPORARY
+func (m *CloudIntegrationInstanceModel) RefreshPropertyValues(diagnostics *diag.Diagnostics, response api.CloudIntegrationInstancesResponse, instanceId, cloudFormationLink *string, isCreate bool) {
+	// END TEMPORARY
 	if instanceId != nil {
 		m.InstanceId = types.StringValue(*instanceId)
 	}
@@ -128,6 +178,12 @@ func (m *CloudIntegrationInstanceModel) RefreshPropertyValues(diagnostics *diag.
 		m.CloudFormationLink = types.StringValue(*cloudFormationLink)
 	}
 
+	// TEMPORARY
+	if isCreate {
+		m.TemplateInstanceId = types.StringValue(*instanceId)
+	}
+	// END TEMPORARY
+
 	if len(response.Reply.Data) == 0 || len(response.Reply.Data) > 1 {
 		m.Status = types.StringNull()
 		m.InstanceName = types.StringNull()
@@ -135,14 +191,24 @@ func (m *CloudIntegrationInstanceModel) RefreshPropertyValues(diagnostics *diag.
 		m.OutpostId = types.StringNull()
 		m.CreationTime = types.StringNull()
 
-		diagnostics.AddWarning(
-			"Integration Status Unknown",
-			"Unable to retrieve computed values for the following arguments "+
-				"from the Cortex Cloud API: status, instance_name, account_name, "+
-				"outpost_id, creation_time\n\n"+
-				"The provider will attempt to populate these arguments during "+
-				"the next terraform apply operation.",
-		)
+		if len(response.Reply.Data) == 0 {
+			diagnostics.AddWarning(
+				"Integration Status Unknown",
+				"Unable to retrieve computed values for the following arguments "+
+					"from the Cortex Cloud API: status, instance_name, account_name, "+
+					"outpost_id, creation_time\n\n"+
+					"The provider will attempt to populate these arguments during "+
+					"the next terraform apply operation.",
+			)
+		} else if len(response.Reply.Data) > 1 {
+			diagnostics.AddWarning(
+				"Integration Status Unknown",
+				"Multiple values returned for the following arguments: "+
+					"status, instance_name, account_name, outpost_id, creation_time\n\n"+
+					"The provider will attempt to populate these arguments during "+
+					"the next terraform refresh or apply operation.",
+			)
+		}
 
 		return
 	}

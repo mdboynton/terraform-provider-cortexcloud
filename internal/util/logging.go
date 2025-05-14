@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/google/uuid"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -12,7 +13,14 @@ import (
 func LogHttpRequest(ctx context.Context, method, url, xdrAuthId, authorization, payload string) string {
 	requestId := uuid.New().String()
 
-	tflog.Debug(ctx, fmt.Sprintf("Sending HTTP Request: request_uid=%s method=\"%s\" url=\"%s\" headers.x-xdr-auth-id=\"%s\" headers.Authorization=\"%s\" body=\n%s\n", requestId, method, url, xdrAuthId, authorization, payload))
+	var _payload string
+	if payload == "" {
+		_payload = "null"
+	} else {
+		_payload = payload
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Sending HTTP Request: request_uid=%s method=\"%s\" url=\"%s\" headers.x-xdr-auth-id=\"%s\" headers.Authorization=\"%s\" body=\n%s\n", requestId, method, url, xdrAuthId, authorization, _payload))
 
 	return requestId
 }

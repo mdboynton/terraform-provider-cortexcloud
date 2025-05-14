@@ -1,11 +1,9 @@
 package models
 
-import (
 //"fmt"
-)
 
 const (
-//BaseEndpoint = "public_api"
+// BaseEndpoint = "public_api"
 )
 
 var (

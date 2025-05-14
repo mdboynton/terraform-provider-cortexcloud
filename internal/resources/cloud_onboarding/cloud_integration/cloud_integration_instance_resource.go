@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+
 	//"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -219,7 +220,10 @@ func (r *CloudIntegrationInstanceResource) Schema(ctx context.Context, req resou
 					"empty, the name will be auto-populated.",
 				Optional: true,
 				Computed: true,
-				Default:  stringdefault.StaticString(""),
+				Validators: []validator.String{
+					validators.ValidateCloudIntegrationInstanceName(),
+				},
+				Default: stringdefault.StaticString(""),
 			},
 			"scan_mode": schema.StringAttribute{
 				// TODO: add description of outpost
@@ -381,6 +385,15 @@ func (r *CloudIntegrationInstanceResource) Schema(ctx context.Context, req resou
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			// TEMPORARY
+			"template_instance_id": schema.StringAttribute{
+				Description: "TEMPORARY: A unique identifier of the integration template.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			// END TEMPORARY
 		},
 	}
 }
@@ -433,13 +446,14 @@ func (r *CloudIntegrationInstanceResource) Create(ctx context.Context, req resou
 	instanceId := response.Reply.Automated.TrackingGuid
 
 	// Retrieve cloud integration details from API
-	integrationDetails := cloudIntegrationAPI.GetByInstanceId(ctx, &resp.Diagnostics, r.client, instanceId)
+	getRequest := plan.ToGetRequest(ctx, &resp.Diagnostics, &instanceId)
+	integrationDetails := cloudIntegrationAPI.Get(ctx, &resp.Diagnostics, r.client, getRequest)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Populate API response values into model
-	plan.RefreshPropertyValues(&resp.Diagnostics, integrationDetails, &instanceId, &templateUrl)
+	plan.RefreshPropertyValues(&resp.Diagnostics, integrationDetails, &instanceId, &templateUrl, true)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -460,13 +474,21 @@ func (r *CloudIntegrationInstanceResource) Read(ctx context.Context, req resourc
 	}
 
 	// Retrieve integration details from API
-	integrationDetails := cloudIntegrationAPI.GetByInstanceId(ctx, &resp.Diagnostics, r.client, state.InstanceId.ValueString())
+	instanceId := state.InstanceId.ValueString()
+	getRequest := state.ToGetRequest(ctx, &resp.Diagnostics, &instanceId)
+	//integrationDetails := cloudIntegrationAPI.Get(ctx, &resp.Diagnostics, r.client, getRequest)
+	integrationDetails := cloudIntegrationAPI.Get(ctx, &resp.Diagnostics, r.client, getRequest)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	//integrationDetails := cloudIntegrationAPI.GetByInstanceId(ctx, &resp.Diagnostics, r.client, state.InstanceId.ValueString())
+	//if resp.Diagnostics.HasError() {
+	//	return
+	//}
+
 	// Refresh state values
-	state.RefreshPropertyValues(&resp.Diagnostics, integrationDetails, nil, nil)
+	state.RefreshPropertyValues(&resp.Diagnostics, integrationDetails, nil, nil, false)
 	if resp.Diagnostics.HasError() {
 		return
 	}
