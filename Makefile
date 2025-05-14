@@ -20,12 +20,14 @@ target_os_arch_stripped=$(shell echo "$(TARGET_OS_ARCH)" | xargs)
 
 default: install
 
+.PHONY: format
 format:
 	gofmt -l -w .
 
 # Print warning message if target operating system architecture does not
 # match the values returned by the system, or error message if this is
 # being executed in a CI pipeline (dictated by the IS_CI_EXECTION value)
+.PHONY: checkos
 checkos:
 ifneq ($(os)_$(arch), $(target_os_arch_stripped))
 ifeq ($(IS_CI_EXECUTION), 0)
@@ -36,11 +38,13 @@ endif
 endif
 
 # Build provider binary
+.PHONY: build
 build: checkos
 	@echo "Building provider ${CC_PROVIDER_BINARY}"
 	@go build -o ${CC_PROVIDER_BINARY}
 
 # Create plugin directory and move binary
+.PHONY: install
 install: build
 	@echo "Creating plugin directory ~/.terraform.d/plugins/${CC_PROVIDER_HOSTNAME}/${CC_PROVIDER_NAMESPACE}/${CC_PROVIDER_NAME}/${CC_PROVIDER_VERSION}/${TARGET_OS_ARCH}"
 	@mkdir -p ~/.terraform.d/plugins/${CC_PROVIDER_HOSTNAME}/${CC_PROVIDER_NAMESPACE}/${CC_PROVIDER_NAME}/${CC_PROVIDER_VERSION}/${TARGET_OS_ARCH}
@@ -49,8 +53,21 @@ install: build
 	@echo "Done!"
 
 # Delete provider binary from plugin directory
+.PHONY: clean
 clean:
+	@echo "Deleting directory ~/.terraform.d/plugins/${CC_PROVIDER_HOSTNAME}/${CC_PROVIDER_NAMESPACE}/${CC_PROVIDER_NAME}"
 	rm -rf ~/.terraform.d/plugins/${CC_PROVIDER_HOSTNAME}/${CC_PROVIDER_NAMESPACE}/${CC_PROVIDER_NAME}
+	@echo "Done!"
+
+# Generate provider documentation
+# TODO: add this to `build` step execution (maybe with flag for production build?)
+.PHONY: docs
+docs:
+	@echo "Adding any missing file headers..."
+	@copywrite headers --config .copywrite.hcl
+	@echo "Generating provider documentation with tfplugindocs..."
+	@tfplugindocs generate --rendered-provider-name "Cortex Cloud Provider"
+	@echo "Done!"
 
 # Run acceptance test suite
 acctest: build
