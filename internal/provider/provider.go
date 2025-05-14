@@ -1,3 +1,6 @@
+// Copyright (c) Palo Alto Networks, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package provider
 
 import (
@@ -6,6 +9,7 @@ import (
 	"os"
 
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api"
+	appSecResources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/resources/application_security"
 	cloudIntegrationResources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/resources/cloud_onboarding/cloud_integration"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -26,15 +30,16 @@ const (
 	InsecureEnvVar             = "CORTEX_TF_INSECURE"
 	RequestTimeoutEnvVar       = "CORTEX_TF_REQUEST_TIMEOUT"
 	RequestRetryIntervalEnvVar = "CORTEX_TF_REQUEST_RETRY_INTERVAL"
+	CrashStackDirEnvVar        = "CORTEX_TF_CRASH_STACK_DIR"
 
 	InsecureDefault             = false
 	RequestTimeoutDefault       = 60
 	RequestRetryIntervalDefault = 3
+	CrashStackDirDefault        = ""
 )
 
 var (
 	_ provider.Provider = &CortexCloudProvider{}
-	//_ provider.ProviderWithEphemeralResources = &CortexCloudProvider{}
 )
 
 func New(version string) func() provider.Provider {
@@ -50,12 +55,13 @@ type CortexCloudProvider struct {
 }
 
 type CortexCloudProviderModel struct {
-	ApiUrl         types.String `tfsdk:"api_url"`
-	ApiKey         types.String `tfsdk:"api_key"`
-	ApiKeyId       types.Int32  `tfsdk:"api_key_id"`
-	Insecure       types.Bool   `tfsdk:"insecure"`
-	RequestTimeout types.Int32  `tfsdk:"request_timeout"`
-	ConfigFile     types.String `tfsdk:"config_file"`
+	ApiUrl               types.String `tfsdk:"api_url"`
+	ApiKey               types.String `tfsdk:"api_key"`
+	ApiKeyId             types.Int32  `tfsdk:"api_key_id"`
+	Insecure             types.Bool   `tfsdk:"insecure"`
+	RequestTimeout       types.Int32  `tfsdk:"request_timeout"`
+	RequestRetryInterval types.Int32  `tfsdk:"request_retry_interval"`
+	CrashStackDir        types.String `tfsdk:"crash_stack_dir"`
 }
 
 func (p *CortexCloudProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
@@ -109,11 +115,17 @@ func (p *CortexCloudProvider) Schema(ctx context.Context, req provider.SchemaReq
 					"the default value is `3`. Can also be configured using the " +
 					"`CORTEX_TF_REQUEST_RETRY_INTERVAL` environment variable.",
 			},
-			"config_file": schema.StringAttribute{
+			"crash_stack_dir": schema.StringAttribute{
 				Optional: true,
-				Description: "File containing the provider configuration values " +
-					"in JSON format. See examples/creds.json. If omitted, the provider " +
-					"will use values from the provider block and/or environment variables.",
+				Description: "The location on the filesystem where the crash stack " +
+					"contents will be written in the event of the provider encountering " +
+					"an unexpected error. If omitted, the default value is an empty " +
+					"string, which will be interpreted as `$TMPDIR` on Unix systems (or " +
+					"`/tmp` if `$TMPDIR` is empty). On Windows systems, an empty string " +
+					"will be interpreted as the the first of the following values that is " +
+					"non-empty, in order of evaluation: `%%TMP%%`, `%%TEMP%%`, " +
+					"%%USERPROFILE%%`, or the Windows directory. Can also be configured " +
+					"using the `CORTEX_TF_CRASH_STACK_DIR` environment variable.",
 			},
 		},
 	}
@@ -186,6 +198,7 @@ func (p *CortexCloudProvider) Metadata(_ context.Context, _ provider.MetadataReq
 func (p *CortexCloudProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		cloudIntegrationResources.NewCloudIntegrationInstanceResource,
+		appSecResources.NewApplicationSecurityRuleResource,
 	}
 }
 
@@ -197,8 +210,8 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 	tflog.Debug(ctx, "Starting provider configuration")
 
 	var (
-		config api.CortexCloudAPIClientConfig
-		diags  diag.Diagnostics
+		apiConfig api.CortexCloudAPIClientConfig
+		diags     diag.Diagnostics
 	)
 
 	//if p.version == "test" {
@@ -226,7 +239,8 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 
 	//	return
 	//}
-	config, diags = GetProviderConfiguration(ctx, req)
+
+	apiConfig, diags = GetAPIClientConfiguration(ctx, req)
 	resp.Diagnostics.Append(diags...)
 	if diags.HasError() {
 		return
@@ -240,15 +254,15 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 	////}
 
 	// Set request timeout to 60 if not specified in provider configuration
-	if config.RequestTimeout == nil {
-		tflog.Warn(ctx, "No request timeout configured. Using default value of 60 seconds.")
+	if apiConfig.RequestTimeout == nil {
+		tflog.Warn(ctx, "No request timeout apiConfigured. Using default value of 60 seconds.")
 		defaultTimeout := 60
-		config.RequestTimeout = &defaultTimeout
+		apiConfig.RequestTimeout = &defaultTimeout
 	}
 
 	// Initialize API client
-	tflog.Debug(ctx, "Provider config created, initializing API client")
-	client, err := api.NewCortexCloudAPIClient(ctx, config)
+	tflog.Debug(ctx, "Provider apiConfig created, initializing API client")
+	client, err := api.NewCortexCloudAPIClient(ctx, apiConfig)
 	if err != nil {
 		resp.Diagnostics.AddError("API Client Initalization Error", err.Error())
 		return
@@ -262,22 +276,15 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 
 	resp.DataSourceData = client
 	resp.ResourceData = client
-	//resp.EphemeralResourceData = client
 }
 
-func GetProviderConfiguration(ctx context.Context, req provider.ConfigureRequest) (api.CortexCloudAPIClientConfig, diag.Diagnostics) {
+func GetAPIClientConfiguration(ctx context.Context, req provider.ConfigureRequest) (api.CortexCloudAPIClientConfig, diag.Diagnostics) {
 	// Retrieve configuration values from provider block
 	var config api.CortexCloudAPIClientConfig
 	diags := req.Config.Get(ctx, &config)
 	if diags.HasError() {
 		return config, diags
 	}
-
-	//// Attempt to retrieve configuration values from the provided config file
-	//// path and overwrite the provider block values with the values from the
-	//// config file if they exist and can be deserialized
-	//diags.Append(overwriteApiClientConfigWithFile(ctx, &config)...)
-
 	//// Attempt to retrieve configuration values from environment variables and
 	//// overwrite the provider block values if they are succesfully retrieved
 	//// and validated

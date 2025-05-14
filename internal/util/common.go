@@ -1,14 +1,21 @@
+// Copyright (c) Palo Alto Networks, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package util
 
 import (
-    "fmt"
-    "runtime"
-    "runtime/debug"
-    "os"
+	"fmt"
+	"os"
+	"runtime"
+	"runtime/debug"
 
-    "github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 )
 
+// PanicHandler is a global panic handler to catch all unexpected errors to
+// prevent the provider from crashing.
+//
+// The crash stack is written into a local text file
 func PanicHandler(diagnostics *diag.Diagnostics) {
 	if r := recover(); r != nil {
 		programCounter, _, _, ok := runtime.Caller(2) // 1=the panic, 2=who called the panic
@@ -18,7 +25,7 @@ func PanicHandler(diagnostics *diag.Diagnostics) {
 			panic(r)
 		}
 
-        funcName := programCounterFunc.Name()
+		funcName := programCounterFunc.Name()
 		message := fmt.Sprintf("An unexpected error occurred in %s.\n\n%v", funcName, r)
 
 		// write stack trace to disk so we don't dump on the console
@@ -30,7 +37,7 @@ func PanicHandler(diagnostics *diag.Diagnostics) {
 
 			_, err := file.WriteString(fileContents)
 			if err == nil {
-                message = fmt.Sprintf("%s\n\nPlease report this issue to the provider developers and include this file if present: %s", message, file.Name()) 
+				message = fmt.Sprintf("%s\n\nPlease report this issue to the provider developers and include this file if present: %s", message, file.Name())
 			}
 		}
 

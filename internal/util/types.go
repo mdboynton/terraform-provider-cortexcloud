@@ -1,3 +1,6 @@
+// Copyright (c) Palo Alto Networks, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package util
 
 import (
@@ -15,8 +18,8 @@ import (
 )
 
 type PolicyRuleOrderMapTuple struct {
-    Order int
-    Position int
+	Order    int
+	Position int
 }
 
 type ModelWithAttributes interface {
