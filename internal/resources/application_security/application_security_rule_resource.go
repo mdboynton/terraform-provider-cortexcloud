@@ -8,19 +8,22 @@ import (
 	"fmt"
 
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api"
-	appSecAPI "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api/application_security"
 	models "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/application_security"
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/util"
 
+	"github.com/mdboynton/cortex-cloud-go/appsec"
+
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"gopkg.in/yaml.v3"
+	"dario.cat/mergo"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ resource.Resource = &ApplicationSecurityRuleResource{}
+	_ resource.Resource               = &ApplicationSecurityRuleResource{}
+	_ resource.ResourceWithModifyPlan = &ApplicationSecurityRuleResource{}
 )
 
 // NewApplicationSecurityRuleResource is a helper function to simplify the provider implementation.
@@ -30,7 +33,7 @@ func NewApplicationSecurityRuleResource() resource.Resource {
 
 // ApplicationSecurityRuleResource is the resource implementation.
 type ApplicationSecurityRuleResource struct {
-	client *api.CortexCloudAPIClient
+	client *appsec.Client
 }
 
 // Metadata returns the resource type name.
@@ -40,196 +43,7 @@ func (r *ApplicationSecurityRuleResource) Metadata(ctx context.Context, req reso
 
 // Schema defines the schema for the resource.
 func (r *ApplicationSecurityRuleResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = schema.Schema{
-		Description: "TODO",
-		Attributes: map[string]schema.Attribute{
-			"category": schema.StringAttribute{
-				// TODO: validation
-				Description: "TODO",
-				Required:    true,
-				//Computed:    true,
-			},
-			"cloud_provider": schema.StringAttribute{
-				// TODO: validation
-				Description: "TODO",
-				//Required:    true,
-				Optional: true,
-				Computed: true,
-			},
-			"created_at": schema.StringAttribute{
-				Description: "TODO",
-				Computed:    true,
-			},
-			"description": schema.StringAttribute{
-				// TODO: validation
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-			},
-			"detection_method": schema.StringAttribute{
-				// TODO: validation
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-			},
-			"doc_link": schema.StringAttribute{
-				// TODO: validation
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-			},
-			"domain": schema.StringAttribute{
-				// TODO: validation
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-			},
-			"finding_category": schema.StringAttribute{
-				// TODO: validation
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-			},
-			"finding_docs": schema.StringAttribute{
-				// TODO: validation
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-			},
-			"finding_type_id": schema.Int32Attribute{
-				// TODO: validation
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-			},
-			"finding_type_name": schema.StringAttribute{
-				// TODO: validation
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-			},
-			"frameworks": schema.SetNestedAttribute{
-				Description: "TODO",
-				Required:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"name": schema.StringAttribute{
-							Description: "TODO",
-							Required:    true,
-							//Computed:    true,
-						},
-						"definition": schema.StringAttribute{
-							// TODO: validate yaml
-							Description: "TODO",
-							Required:    true,
-							//Computed:    true,
-						},
-						"definition_link": schema.StringAttribute{
-							Description: "TODO",
-							Optional:    true,
-							Computed:    true,
-							Default:     stringdefault.StaticString(""),
-						},
-						"remediation_description": schema.StringAttribute{
-							Description: "TODO",
-							Optional:    true,
-							Computed:    true,
-							Default:     stringdefault.StaticString(""),
-						},
-					},
-				},
-			},
-			"id": schema.StringAttribute{
-				// TODO: validation
-				// TODO: should this be modifiable? can you change it via API?
-				Description: "TODO",
-				//Optional:    true,
-				Computed: true,
-			},
-			"is_custom": schema.BoolAttribute{
-				// TODO: validation
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-			},
-			"is_enabled": schema.BoolAttribute{
-				// TODO: validation
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-			},
-			"labels": schema.SetAttribute{
-				Description: "TODO",
-				Optional:    true,
-				ElementType: types.StringType,
-			},
-			"mitre_tactics": schema.SetAttribute{
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-				ElementType: types.StringType,
-			},
-			"mitre_techniques": schema.SetAttribute{
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-				ElementType: types.StringType,
-			},
-			"name": schema.StringAttribute{
-				// TODO: validation
-				// TODO: should this be modifiable? does it require replace?
-				Description: "TODO",
-				Required:    true,
-			},
-			"owner": schema.StringAttribute{
-				// TODO: validation
-				Description: "TODO",
-				//Optional:    true,
-				Computed: true,
-			},
-			"scanner": schema.StringAttribute{
-				// TODO: validation
-				Description: "TODO",
-				Required:    true,
-				//Computed:    true,
-			},
-			//"scanner_rule_id": schema.StringAttribute{
-			//	// TODO: validation
-			//	Description: "TODO",
-			//	Optional:    true,
-			//    Computed:    true,
-			//},
-			"severity": schema.StringAttribute{
-				// TODO: validation
-				Description: "TODO",
-				Required:    true,
-				//Computed:    true,
-			},
-			"source": schema.StringAttribute{
-				// TODO: validation
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-			},
-			//"source_version": schema.StringAttribute{
-			//	// TODO: validation
-			//	Description: "TODO",
-			//	Optional:    true,
-			//    Computed:    true,
-			//},
-			"sub_category": schema.StringAttribute{
-				// TODO: validation
-				// The valid inputs for this attribute are determined by the "category" value
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-			},
-			"updated_at": schema.StringAttribute{
-				Description: "TODO",
-				Computed:    true,
-			},
-		},
-	}
+	resp.Schema = models.ApplicationSecurityRuleModel{}.GetSchema()
 }
 
 // Configure adds the provider-configured client to the resource.
@@ -238,18 +52,76 @@ func (r *ApplicationSecurityRuleResource) Configure(ctx context.Context, req res
 		return
 	}
 
-	client, ok := req.ProviderData.(*api.CortexCloudAPIClient)
+	client, ok := req.ProviderData.(*api.Client)
 
 	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *http.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-
+		util.AddUnexpectedResourceConfigureTypeError(&resp.Diagnostics, "*http.Client", req.ProviderData)
 		return
 	}
 
-	r.client = client
+	r.client = client.AppSec
+}
+
+// ModifyPlan modifies the planned state of the resource
+//
+// NOTE: Because this resource's implementation of this function only serves
+// to validate the YAML definitions for each of the configured frameworks, it
+// should *probably* be implemented in the ValidateConfiguration function
+// instead, but I haven't found a way to be able to make it work in there since
+// the API client isn't initialized when that function is called.
+func (r *ApplicationSecurityRuleResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	// If the entire plan is null, the resource is planned for destruction
+	if req.Plan.Raw.IsNull() {
+		return
+	}
+
+	// Read Terraform plan data into model
+	var plan models.ApplicationSecurityRuleModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Serialize framework YAML definitions
+	for _, framework := range plan.Frameworks {
+		yamlBytes, err := yaml.Marshal(framework.Definition.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Converting YAML",
+				err.Error(),
+			)
+			return
+		}
+
+		framework.Definition = types.StringValue(string(yamlBytes))
+	}
+
+	// Update frameworks attribute with serialized definitions
+	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("frameworks"), plan.Frameworks)...)
+
+	//// If the resource already exists and the planned value of the frameworks
+	//// attribute is equal to the value in the state, then no validation needs
+	//// to occur
+	//// TODO: fix this
+	////if !req.State.Raw.IsNull() {
+	////	var state models.ApplicationSecurityRuleModel
+	////	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	////	if resp.Diagnostics.HasError() {
+	////		return
+	////	}
+
+	////	if !state.Frameworks.IsNull() && plan.Frameworks.Equal(state.Frameworks) {
+	////		return
+	////	}
+	////}
+
+	//// Validate framework attribute definition against API
+	//validationRequest := plan.ToValidateRequest(ctx, &resp.Diagnostics)
+	//if resp.Diagnostics.HasError() {
+	//	return
+	//}
+
+	//appSecAPI.Validate(ctx, &resp.Diagnostics, r.client, validationRequest)
 }
 
 // Create creates the resource and sets the initial Terraform state.
@@ -263,15 +135,55 @@ func (r *ApplicationSecurityRuleResource) Create(ctx context.Context, req resour
 		return
 	}
 
-	// Generate API request body from plan
-	request := plan.ToCreateRequest(ctx, &resp.Diagnostics)
+	// Generate API create request body from plan
+	createRequest := plan.ToCreateOrCloneRequest(ctx, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Create new application security rule
-	response := appSecAPI.Create(ctx, &resp.Diagnostics, r.client, request)
-	if resp.Diagnostics.HasError() {
+	//validateRequest, err := appsec.ValidateRequest{}.FromCreateOrCloneRequest(createRequest)
+	validateRequestData := []appsec.ValidateRequest{}
+	for _, framework := range createRequest.Frameworks {
+		validateRequestData = append(validateRequestData, appsec.ValidateRequest{
+			Framework: framework.Name,
+			Definition: framework.Definition,
+		})
+	}
+
+
+	//if err != nil {
+	//	resp.Diagnostics.AddError(
+	//		"Error Creating Or Cloning Application Security Rule",
+	//		fmt.Sprintf("failed to convert to validate request: %s", err.Error()),
+	//	)
+	//	return
+	//}
+
+	validateResponse, err := r.client.Validate(ctx, validateRequestData)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Creating Or Cloning Application Security Rule",
+			err.Error(),
+		)
+		return
+	}
+
+	if validateResponse.IsValid == nil || *validateResponse.IsValid == false {
+		resp.Diagnostics.AddError(
+			"Error Creating Or Cloning Application Security Rule",
+			fmt.Sprintf("rule validation failed: %+v", validateResponse),
+		)
+		return
+
+	}
+
+	// Create new resource
+	response, err := r.client.CreateOrClone(ctx, createRequest)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Creating Or Cloning Application Security Rule",
+			err.Error(),
+		)
 		return
 	}
 
@@ -296,9 +208,13 @@ func (r *ApplicationSecurityRuleResource) Read(ctx context.Context, req resource
 		return
 	}
 
-	// Retrieve rule details from API
-	rule := appSecAPI.Get(ctx, &resp.Diagnostics, r.client, state.Id.ValueString())
-	if resp.Diagnostics.HasError() {
+	// Retrieve resource from API
+	rule, err := r.client.Get(ctx, state.Id.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Reading Application Security Rule",
+			err.Error(),
+		)
 		return
 	}
 
@@ -310,17 +226,78 @@ func (r *ApplicationSecurityRuleResource) Read(ctx context.Context, req resource
 
 	// Set refreshed state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 }
 
 // Update updates the resource and sets the updated Terraform state on success.
 func (r *ApplicationSecurityRuleResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	defer util.PanicHandler(&resp.Diagnostics)
+
+	// Get current state
+	var state models.ApplicationSecurityRuleModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Read Terraform plan data into model
+	var plan models.ApplicationSecurityRuleModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if err := mergo.MergeWithOverwrite(&plan, state); err != nil {
+		resp.Diagnostics.AddError(
+			"Error Updating Application Security Rule",
+			fmt.Sprintf("Error occured while merging existing application security rule with planned value: %s", err.Error()),
+		)
+		return
+	}
+
+	// Generate API create request body from plan
+	request := plan.ToUpdateRequest(ctx, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Update resource
+	response, err := r.client.Update(ctx, plan.Id.ValueString(), request)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Updating Application Security Rule",
+			err.Error(),
+		)
+		return
+	}
+
+	// Populate new values
+	plan.RefreshPropertyValues(ctx, &resp.Diagnostics, response.Rule)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Set refreshed state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
 // Delete deletes the resource and removes it from the Terraform state on success.
 func (r *ApplicationSecurityRuleResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	defer util.PanicHandler(&resp.Diagnostics)
+
+	// Get current state
+	var state models.ApplicationSecurityRuleModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Delete resource
+	err := r.client.Delete(ctx, state.Id.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Deleting Application Security Rule",
+			err.Error(),
+		)
+		return
+	}
 }

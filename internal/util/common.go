@@ -30,7 +30,7 @@ func PanicHandler(diagnostics *diag.Diagnostics) {
 
 		// write stack trace to disk so we don't dump on the console
 		fileContents := fmt.Sprintf("%s\n\n%s", funcName, debug.Stack())
-		file, err := os.CreateTemp("", "cortex_cloud_provider_crash_stack.*.txt")
+		file, err := os.CreateTemp("", "terraform_cortexcloud_crash_stack.*.txt")
 
 		if err == nil {
 			defer file.Close()

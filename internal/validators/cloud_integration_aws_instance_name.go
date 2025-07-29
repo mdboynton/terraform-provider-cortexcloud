@@ -8,7 +8,8 @@ import (
 	"fmt"
 	"regexp"
 
-	models "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/cloud_onboarding"
+	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/util"
+
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -47,7 +48,7 @@ func (v validateCloudIntegrationInstanceName) ValidateString(ctx context.Context
 	cloudProviderName := cloudProvider.ValueString()
 
 	cloudFormationStackNameRegexp := "^[a-zA-Z][-a-zA-Z0-9]*$"
-	isAws := (cloudProviderName == models.CloudIntegrationCloudProviderEnumAws)
+	isAws := (cloudProviderName == util.CloudIntegrationCloudProviderEnumAws)
 	isValidStackName, err := regexp.Match(cloudFormationStackNameRegexp, []byte(instanceName))
 	if err != nil {
 		resp.Diagnostics.AddError(

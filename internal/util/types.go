@@ -17,11 +17,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-type PolicyRuleOrderMapTuple struct {
-	Order    int
-	Position int
-}
-
 type ModelWithAttributes interface {
 	GetAttributes() map[string]schema.Attribute // workaround because NestedAttributeObject and SingleNestedAttribute do not share a base type
 }
