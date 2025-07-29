@@ -1,15 +1,10 @@
-// Copyright (c) Palo Alto Networks, Inc.
-// SPDX-License-Identifier: MPL-2.0
+package util
 
-package models
-
-//"fmt"
-
-const (
-// BaseEndpoint = "public_api"
-)
-
+// TODO: replace all references to these values with SDK analogs
 var (
+	// *********************************************************
+	// Cloud Onboarding
+	// *********************************************************
 	CloudIntegrationCloudProviderEnumAws   = "AWS"
 	CloudIntegrationCloudProviderEnumAzure = "AZURE"
 	CloudIntegrationCloudProviderEnumGcp   = "GCP"
@@ -43,4 +38,12 @@ var (
 		CloudIntegrationRegistryScanningTypeEnumLatestTag,
 		CloudIntegrationRegistryScanningTypeEnumTagsModifiedDays,
 	}
+
+	// *********************************************************
+	// Application Security
+	// *********************************************************
+	AppSecRuleValidationTypeEnum = "VALIDATE"
+
+	AppSecRuleFrameworkNameEnumTerraform     = "TERRAFORM"
+	AppSecRuleFrameworkNameEnumTerraformPlan = "TERRAFORMPLAN"
 )

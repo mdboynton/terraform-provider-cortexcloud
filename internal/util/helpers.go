@@ -50,8 +50,16 @@ func GetEnvironmentVariable(name string, reciever interface{}) error {
 	}
 }
 
-func IsNilOrEmpty(value *string) bool {
+func StringPointerIsNilOrEmpty(value *string) bool {
 	if value == nil || *value == "" {
+		return true
+	}
+
+	return false
+}
+
+func Int32PointerIsNilOrNegative(value *int32) bool {
+	if value == nil || *value < 0 {
 		return true
 	}
 
