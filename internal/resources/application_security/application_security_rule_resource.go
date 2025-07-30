@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api"
+	providerModels "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/provider"
 	models "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/application_security"
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/util"
 
@@ -52,7 +52,7 @@ func (r *ApplicationSecurityRuleResource) Configure(ctx context.Context, req res
 		return
 	}
 
-	client, ok := req.ProviderData.(*api.Client)
+	client, ok := req.ProviderData.(*providerModels.CortexCloudSDKClients)
 
 	if !ok {
 		util.AddUnexpectedResourceConfigureTypeError(&resp.Diagnostics, "*http.Client", req.ProviderData)

@@ -5,8 +5,7 @@ import (
 
 	"github.com/mdboynton/cortex-cloud-go/cloudonboarding"
 
-	//"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api"
-	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api"
+	providerModels "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/provider"
 	models "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/cloud_onboarding"
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/util"
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/validators"
@@ -250,7 +249,7 @@ func (r *CloudIntegrationInstanceDataSource) Configure(ctx context.Context, req 
 		return
 	}
 
-	client, ok := req.ProviderData.(*api.Client)
+	client, ok := req.ProviderData.(*providerModels.CortexCloudSDKClients)
 
 	if !ok {
 		util.AddUnexpectedResourceConfigureTypeError(&resp.Diagnostics, "*http.Client", req.ProviderData)

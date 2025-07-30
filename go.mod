@@ -3,6 +3,7 @@ module github.com/PaloAltoNetworks/terraform-provider-cortexcloud
 go 1.24.3
 
 require (
+	dario.cat/mergo v1.0.2
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/terraform-plugin-framework v1.14.1
 	github.com/hashicorp/terraform-plugin-framework-validators v0.17.0
@@ -14,7 +15,6 @@ require (
 )
 
 require (
-	dario.cat/mergo v1.0.2 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect

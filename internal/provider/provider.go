@@ -9,12 +9,14 @@ import (
 	"os"
 	"slices"
 
-	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api"
+	//"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api"
 	cloudOnboardingDataSources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/data_sources/cloud_onboarding"
 	models "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/provider"
 	appSecResources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/resources/application_security"
 	cloudOnboardingResources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/resources/cloud_onboarding"
 	sdk "github.com/mdboynton/cortex-cloud-go/api"
+	"github.com/mdboynton/cortex-cloud-go/appsec"
+	"github.com/mdboynton/cortex-cloud-go/cloudonboarding"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -142,6 +144,11 @@ func (p *CortexCloudProvider) DataSources(ctx context.Context) []func() datasour
 func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	tflog.Debug(ctx, "Starting provider configuration")
 
+	// Print warning if debug logs are enabled
+	if slices.Contains([]string{"DEBUG", "TRACE"}, os.Getenv("TF_LOG")) || slices.Contains([]string{"DEBUG", "TRACE"}, os.Getenv("TF_LOG_PROVIDER")) {
+		tflog.Warn(ctx, "Debug logging enabled. Be aware that your API key and key ID will be visible in the provider log output!")
+	}
+
 	// Retrieve configuration values from provider block
 	var providerConfig models.CortexCloudProviderModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &providerConfig)...)
@@ -149,18 +156,56 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 		return
 	}
 
-	client := api.Client{}
-	client.Setup(ctx, &resp.Diagnostics, providerConfig)
+	var (
+		clientConfig *sdk.Config
+		err          error
+	)
 
-	if resp.Diagnostics.HasError() {
+	if !providerConfig.ConfigFile.IsNull() && !providerConfig.ConfigFile.IsUnknown() {
+		configFile := providerConfig.ConfigFile.ValueString()
+
+		if configFile != "" {
+			clientConfig, err = sdk.NewConfigFromFile(configFile, providerConfig.CheckEnvironment.ValueBool())
+		}
+	} else {
+		clientConfig = sdk.NewConfig(
+			providerConfig.ApiUrl.ValueString(),
+			providerConfig.ApiKey.ValueString(),
+			int(providerConfig.ApiKeyId.ValueInt32()),
+			providerConfig.CheckEnvironment.ValueBool(),
+			sdk.WithApiPort(int(providerConfig.ApiPort.ValueInt32())),
+			sdk.WithSkipVerifyCertificate(providerConfig.Insecure.ValueBool()),
+			sdk.WithTimeout(int(providerConfig.RequestTimeout.ValueInt32())),
+			//sdk.WithRetryMaxDelay(providerConfig.RetryMaxDelay),
+			sdk.WithCrashStackDir(providerConfig.CrashStackDir.ValueString()),
+		)
+	}
+
+	if err = clientConfig.Validate(); err != nil {
+		resp.Diagnostics.AddError("Cortex Cloud SDK Configuration Error", err.Error())
 		return
 	}
 
-	// Print warning if debug logs are enabled
-	if slices.Contains([]string{"DEBUG", "TRACE"}, os.Getenv("TF_LOG")) || slices.Contains([]string{"DEBUG", "TRACE"}, os.Getenv("TF_LOG_PROVIDER")) {
-		tflog.Warn(ctx, "Debug logging enabled. Be aware that your API key and key ID will be visible in the provider log output!")
+	clients := models.CortexCloudSDKClients{}
+
+	appSecClient, err := appsec.NewClient(clientConfig)
+	if err != nil {
+		resp.Diagnostics.AddError("Cortex Cloud API Setup Error", err.Error())
+		return
+	} 
+
+	cloudOnboardingClient, err := cloudonboarding.NewClient(clientConfig)
+	if err != nil {
+		resp.Diagnostics.AddError("Cortex Cloud API Setup Error", err.Error())
+		return
 	}
 
-	resp.DataSourceData = &client
-	resp.ResourceData = &client
+	tflog.Debug(ctx, "Cortex Cloud API client setup complete")
+
+		
+	clients.AppSec = appSecClient
+	clients.CloudOnboarding = cloudOnboardingClient
+
+	resp.DataSourceData = &clients
+	resp.ResourceData = &clients
 }

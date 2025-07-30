@@ -1,6 +1,10 @@
 package models
 
 import (
+	sdk "github.com/mdboynton/cortex-cloud-go/api"
+	"github.com/mdboynton/cortex-cloud-go/appsec"
+	"github.com/mdboynton/cortex-cloud-go/cloudonboarding"
+
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -15,4 +19,10 @@ type CortexCloudProviderModel struct {
 	CrashStackDir        types.String `tfsdk:"crash_stack_dir"`
 	ConfigFile           types.String `tfsdk:"config_file"`
 	CheckEnvironment     types.Bool   `tfsdk:"check_environment"`
+}
+
+type CortexCloudSDKClients struct {
+	Config          sdk.Config
+	AppSec          *appsec.Client
+	CloudOnboarding *cloudonboarding.Client
 }
