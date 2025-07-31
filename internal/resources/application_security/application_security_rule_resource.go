@@ -7,17 +7,25 @@ import (
 	"context"
 	"fmt"
 
-	providerModels "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/provider"
 	models "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/application_security"
+	providerModels "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/provider"
+	//"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/planmodifiers"
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/util"
 
 	"github.com/mdboynton/cortex-cloud-go/appsec"
 
+	"dario.cat/mergo"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"gopkg.in/yaml.v3"
-	"dario.cat/mergo"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -43,7 +51,240 @@ func (r *ApplicationSecurityRuleResource) Metadata(ctx context.Context, req reso
 
 // Schema defines the schema for the resource.
 func (r *ApplicationSecurityRuleResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = models.ApplicationSecurityRuleModel{}.GetSchema()
+	resp.Schema = schema.Schema{
+		Description: "TODO",
+		Attributes: map[string]schema.Attribute{
+			"category": schema.StringAttribute{
+				// TODO: validation
+				Description: "TODO",
+				Required:    true,
+				//Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"cloud_provider": schema.StringAttribute{
+				Description: "TODO",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"created_at": schema.StringAttribute{
+				Description: "TODO",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"description": schema.StringAttribute{
+				// TODO: rename to "Impact"
+				// TODO: validation
+				Description: "TODO",
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+				Default: stringdefault.StaticString(""),
+			},
+			"detection_method": schema.StringAttribute{
+				Description: "TODO",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"doc_link": schema.StringAttribute{
+				Description: "TODO",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"domain": schema.StringAttribute{
+				Description: "TODO",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"finding_category": schema.StringAttribute{
+				Description: "TODO",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"finding_docs": schema.StringAttribute{
+				Description: "TODO",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"finding_type_id": schema.Int32Attribute{
+				Description: "TODO",
+				Computed:    true,
+				PlanModifiers: []planmodifier.Int32{
+					int32planmodifier.UseStateForUnknown(),
+				},
+			},
+			"finding_type_name": schema.StringAttribute{
+				Description: "TODO",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"frameworks": schema.ListNestedAttribute{
+				// TODO: validator to make sure this is not null
+				Description: "TODO",
+				Required:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Description: "TODO",
+							Required:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"definition": schema.StringAttribute{
+							Description: "TODO",
+							Optional: true,
+							Computed: true,
+							//PlanModifiers: []planmodifier.String{
+							//	planmodifiers.AddFrameworkDefinitionMetadata(),
+							//},
+						},
+						"definition_link": schema.StringAttribute{
+							Description: "TODO",
+							Optional:    true,
+							Computed:    true,
+							Default:     stringdefault.StaticString(""),
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"remediation_description": schema.StringAttribute{
+							Description: "TODO",
+							Optional:    true,
+							Computed:    true,
+							Default:     stringdefault.StaticString(""),
+						},
+					},
+				},
+				//PlanModifiers: []planmodifier.List{
+				//	setplanmodifier.UseStateForUnknown(),
+				//},
+			},
+			"id": schema.StringAttribute{
+				Description: "TODO",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"is_custom": schema.BoolAttribute{
+				Description: "TODO",
+				Computed:    true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"is_enabled": schema.BoolAttribute{
+				Description: "TODO",
+				Computed:    true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"labels": schema.SetAttribute{
+				Description: "TODO",
+				Required:    true,
+				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"mitre_tactics": schema.SetAttribute{
+				Description: "TODO",
+				Computed:    true,
+				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"mitre_techniques": schema.SetAttribute{
+				Description: "TODO",
+				Computed:    true,
+				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"name": schema.StringAttribute{
+				// TODO: validation
+				// TODO: should this be modifiable? does it require replace?
+				Description: "TODO",
+				Required:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"owner": schema.StringAttribute{
+				Description: "TODO",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"scanner": schema.StringAttribute{
+				// TODO: validation
+				Description: "TODO",
+				Required:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"severity": schema.StringAttribute{
+				// TODO: validation
+				Description: "TODO",
+				Required:    true,
+				//Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"source": schema.StringAttribute{
+				// TODO: validation
+				Description: "TODO",
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"sub_category": schema.StringAttribute{
+				// TODO: validation
+				// The valid inputs for this attribute are determined by the "category" value
+				Description: "TODO",
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"updated_at": schema.StringAttribute{
+				Description: "TODO",
+				Computed:    true,
+				//PlanModifiers: []planmodifier.String{
+				//	stringplanmodifier.UseStateForUnknown(),
+				//},
+			},
+		},
+	}
 }
 
 // Configure adds the provider-configured client to the resource.
@@ -141,7 +382,6 @@ func (r *ApplicationSecurityRuleResource) Create(ctx context.Context, req resour
 		return
 	}
 
-	//validateRequest, err := appsec.ValidateRequest{}.FromCreateOrCloneRequest(createRequest)
 	validateRequestData := []appsec.ValidateRequest{}
 	for _, framework := range createRequest.Frameworks {
 		validateRequestData = append(validateRequestData, appsec.ValidateRequest{
@@ -149,15 +389,6 @@ func (r *ApplicationSecurityRuleResource) Create(ctx context.Context, req resour
 			Definition: framework.Definition,
 		})
 	}
-
-
-	//if err != nil {
-	//	resp.Diagnostics.AddError(
-	//		"Error Creating Or Cloning Application Security Rule",
-	//		fmt.Sprintf("failed to convert to validate request: %s", err.Error()),
-	//	)
-	//	return
-	//}
 
 	validateResponse, err := r.client.Validate(ctx, validateRequestData)
 	if err != nil {
@@ -246,7 +477,7 @@ func (r *ApplicationSecurityRuleResource) Update(ctx context.Context, req resour
 		return
 	}
 
-	if err := mergo.MergeWithOverwrite(&plan, state); err != nil {
+	if err := mergo.MergeWithOverwrite(&state, plan); err != nil {
 		resp.Diagnostics.AddError(
 			"Error Updating Application Security Rule",
 			fmt.Sprintf("Error occured while merging existing application security rule with planned value: %s", err.Error()),

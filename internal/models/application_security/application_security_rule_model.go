@@ -12,13 +12,6 @@ import (
 	"github.com/mdboynton/cortex-cloud-go/appsec"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -94,352 +87,106 @@ type FrameworkDefinitionLogicConditionModel struct {
 	Or            []FrameworkDefinitionLogicConditionModel `tfsdk:"or" yaml:"or,omitempty"`
 }
 
-// *********************************************************
-// Schema
-// *********************************************************
-func (m ApplicationSecurityRuleModel) GetSchema() schema.Schema {
-	return schema.Schema{
-		Description: "TODO",
-		Attributes: map[string]schema.Attribute{
-			"category": schema.StringAttribute{
-				// TODO: validation
-				Description: "TODO",
-				Required:    true,
-				//Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"cloud_provider": schema.StringAttribute{
-				Description: "TODO",
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"created_at": schema.StringAttribute{
-				Description: "TODO",
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"description": schema.StringAttribute{
-				// TODO: rename to "Impact"
-				// TODO: validation
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-				Default: stringdefault.StaticString(""),
-			},
-			"detection_method": schema.StringAttribute{
-				Description: "TODO",
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"doc_link": schema.StringAttribute{
-				Description: "TODO",
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"domain": schema.StringAttribute{
-				Description: "TODO",
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"finding_category": schema.StringAttribute{
-				Description: "TODO",
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"finding_docs": schema.StringAttribute{
-				Description: "TODO",
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"finding_type_id": schema.Int32Attribute{
-				Description: "TODO",
-				Computed:    true,
-				PlanModifiers: []planmodifier.Int32{
-					int32planmodifier.UseStateForUnknown(),
-				},
-			},
-			"finding_type_name": schema.StringAttribute{
-				Description: "TODO",
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"frameworks": FrameworkModel{}.GetSchema(),
-			"id": schema.StringAttribute{
-				Description: "TODO",
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"is_custom": schema.BoolAttribute{
-				Description: "TODO",
-				Computed:    true,
-				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"is_enabled": schema.BoolAttribute{
-				Description: "TODO",
-				Computed:    true,
-				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"labels": schema.SetAttribute{
-				Description: "TODO",
-				Required:    true,
-				ElementType: types.StringType,
-				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"mitre_tactics": schema.SetAttribute{
-				Description: "TODO",
-				Computed:    true,
-				ElementType: types.StringType,
-				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"mitre_techniques": schema.SetAttribute{
-				Description: "TODO",
-				Computed:    true,
-				ElementType: types.StringType,
-				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"name": schema.StringAttribute{
-				// TODO: validation
-				// TODO: should this be modifiable? does it require replace?
-				Description: "TODO",
-				Required:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"owner": schema.StringAttribute{
-				Description: "TODO",
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"scanner": schema.StringAttribute{
-				// TODO: validation
-				Description: "TODO",
-				Required:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"severity": schema.StringAttribute{
-				// TODO: validation
-				Description: "TODO",
-				Required:    true,
-				//Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"source": schema.StringAttribute{
-				// TODO: validation
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"sub_category": schema.StringAttribute{
-				// TODO: validation
-				// The valid inputs for this attribute are determined by the "category" value
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"updated_at": schema.StringAttribute{
-				Description: "TODO",
-				Computed:    true,
-				//PlanModifiers: []planmodifier.String{
-				//	stringplanmodifier.UseStateForUnknown(),
-				//},
-			},
-		},
-	}
-}
-
-func (m FrameworkModel) GetSchema() schema.ListNestedAttribute {
-	return schema.ListNestedAttribute{
-		// TODO: validator to make sure this is not null
-		Description: "TODO",
-		Required:    true,
-		NestedObject: schema.NestedAttributeObject{
-			Attributes: map[string]schema.Attribute{
-				"name": schema.StringAttribute{
-					Description: "TODO",
-					Required:    true,
-					PlanModifiers: []planmodifier.String{
-						stringplanmodifier.UseStateForUnknown(),
-					},
-				},
-				//"definition": FrameworkDefinitionModel{}.GetSchema(),
-				"definition": schema.StringAttribute{
-					Description: "TODO",
-					//Required:    true,
-					Optional: true,
-					Computed: true,
-					//PlanModifiers: []planmodifier.String{
-					//	stringplanmodifier.UseStateForUnknown(),
-					//},
-				},
-				"definition_link": schema.StringAttribute{
-					Description: "TODO",
-					Optional:    true,
-					Computed:    true,
-					Default:     stringdefault.StaticString(""),
-					PlanModifiers: []planmodifier.String{
-						stringplanmodifier.UseStateForUnknown(),
-					},
-				},
-				"remediation_description": schema.StringAttribute{
-					Description: "TODO",
-					Optional:    true,
-					Computed:    true,
-					Default:     stringdefault.StaticString(""),
-				},
-			},
-		},
-		//PlanModifiers: []planmodifier.Set{
-		//	setplanmodifier.UseStateForUnknown(),
-		//},
-	}
-}
-
-func (m FrameworkDefinitionModel) GetSchema() schema.SingleNestedAttribute {
-	return schema.SingleNestedAttribute{
-		Description: "TODO",
-		Required:    true,
-		Attributes: map[string]schema.Attribute{
-			"metadata":   FrameworkDefinitionMetadataModel{}.GetSchema(),
-			"scope":      FrameworkDefinitionScopeModel{}.GetSchema(),
-			"definition": FrameworkDefinitionLogicModel{}.GetSchema(),
-		},
-	}
-}
-
-func (m FrameworkDefinitionMetadataModel) GetSchema() schema.SingleNestedAttribute {
-	return schema.SingleNestedAttribute{
-		Description: "TODO",
-		Optional:    true,
-		Computed:    true,
-		Attributes: map[string]schema.Attribute{
-			"name": schema.StringAttribute{
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-			},
-			"guidelines": schema.StringAttribute{
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-			},
-			"category": schema.StringAttribute{
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-			},
-			"severity": schema.StringAttribute{
-				Description: "TODO",
-				Optional:    true,
-				Computed:    true,
-			},
-		},
-	}
-}
-
-func (m FrameworkDefinitionScopeModel) GetSchema() schema.SingleNestedAttribute {
-	return schema.SingleNestedAttribute{
-		Description: "TODO",
-		Required:    true,
-		Attributes: map[string]schema.Attribute{
-			"provider": schema.StringAttribute{
-				Description: "TODO",
-				Required:    true,
-			},
-		},
-	}
-}
-
-// func (m FrameworkDefinitionLogicModel) GetSchema() schema.SingleNestedAttribute {
-func (m FrameworkDefinitionLogicModel) GetSchema() schema.DynamicAttribute {
-	return schema.DynamicAttribute{
-		Description: "TODO",
-		Required:    true,
-		//Attributes: map[string]schema.Attribute{
-		//	"and": FrameworkDefinitionLogicConditionModel{}.GetSchema(),
-		//	"or":  FrameworkDefinitionLogicConditionModel{}.GetSchema(),
-		//},
-	}
-}
-
-func (m FrameworkDefinitionLogicConditionModel) GetSchema() schema.ListNestedAttribute {
-	return schema.ListNestedAttribute{
-		Description: "TODO",
-		Required:    true,
-		NestedObject: schema.NestedAttributeObject{
-			Attributes: map[string]schema.Attribute{
-				"condition_type": schema.StringAttribute{
-					Description: "TODO",
-					Required:    true,
-				},
-				"resource_types": schema.ListAttribute{
-					Description: "TODO",
-					Required:    true,
-					ElementType: types.StringType,
-				},
-				"attribute": schema.StringAttribute{
-					Description: "TODO",
-					Required:    true,
-				},
-				"operator": schema.StringAttribute{
-					Description: "TODO",
-					Required:    true,
-				},
-				"value": schema.StringAttribute{
-					Description: "TODO",
-					Required:    true,
-				},
-				"and": FrameworkDefinitionLogicConditionModel{}.GetSchema(),
-				"or":  FrameworkDefinitionLogicConditionModel{}.GetSchema(),
-			},
-		},
-	}
-}
+//func (m FrameworkDefinitionModel) GetSchema() schema.SingleNestedAttribute {
+//	return schema.SingleNestedAttribute{
+//		Description: "TODO",
+//		Required:    true,
+//		Attributes: map[string]schema.Attribute{
+//			"metadata":   FrameworkDefinitionMetadataModel{}.GetSchema(),
+//			"scope":      FrameworkDefinitionScopeModel{}.GetSchema(),
+//			"definition": FrameworkDefinitionLogicModel{}.GetSchema(),
+//		},
+//	}
+//}
+//
+//func (m FrameworkDefinitionMetadataModel) GetSchema() schema.SingleNestedAttribute {
+//	return schema.SingleNestedAttribute{
+//		Description: "TODO",
+//		Optional:    true,
+//		Computed:    true,
+//		Attributes: map[string]schema.Attribute{
+//			"name": schema.StringAttribute{
+//				Description: "TODO",
+//				Optional:    true,
+//				Computed:    true,
+//			},
+//			"guidelines": schema.StringAttribute{
+//				Description: "TODO",
+//				Optional:    true,
+//				Computed:    true,
+//			},
+//			"category": schema.StringAttribute{
+//				Description: "TODO",
+//				Optional:    true,
+//				Computed:    true,
+//			},
+//			"severity": schema.StringAttribute{
+//				Description: "TODO",
+//				Optional:    true,
+//				Computed:    true,
+//			},
+//		},
+//	}
+//}
+//
+//func (m FrameworkDefinitionScopeModel) GetSchema() schema.SingleNestedAttribute {
+//	return schema.SingleNestedAttribute{
+//		Description: "TODO",
+//		Required:    true,
+//		Attributes: map[string]schema.Attribute{
+//			"provider": schema.StringAttribute{
+//				Description: "TODO",
+//				Required:    true,
+//			},
+//		},
+//	}
+//}
+//
+//// func (m FrameworkDefinitionLogicModel) GetSchema() schema.SingleNestedAttribute {
+//func (m FrameworkDefinitionLogicModel) GetSchema() schema.DynamicAttribute {
+//	return schema.DynamicAttribute{
+//		Description: "TODO",
+//		Required:    true,
+//		//Attributes: map[string]schema.Attribute{
+//		//	"and": FrameworkDefinitionLogicConditionModel{}.GetSchema(),
+//		//	"or":  FrameworkDefinitionLogicConditionModel{}.GetSchema(),
+//		//},
+//	}
+//}
+//
+//func (m FrameworkDefinitionLogicConditionModel) GetSchema() schema.ListNestedAttribute {
+//	return schema.ListNestedAttribute{
+//		Description: "TODO",
+//		Required:    true,
+//		NestedObject: schema.NestedAttributeObject{
+//			Attributes: map[string]schema.Attribute{
+//				"condition_type": schema.StringAttribute{
+//					Description: "TODO",
+//					Required:    true,
+//				},
+//				"resource_types": schema.ListAttribute{
+//					Description: "TODO",
+//					Required:    true,
+//					ElementType: types.StringType,
+//				},
+//				"attribute": schema.StringAttribute{
+//					Description: "TODO",
+//					Required:    true,
+//				},
+//				"operator": schema.StringAttribute{
+//					Description: "TODO",
+//					Required:    true,
+//				},
+//				"value": schema.StringAttribute{
+//					Description: "TODO",
+//					Required:    true,
+//				},
+//				"and": FrameworkDefinitionLogicConditionModel{}.GetSchema(),
+//				"or":  FrameworkDefinitionLogicConditionModel{}.GetSchema(),
+//			},
+//		},
+//	}
+//}
 
 // TODO: put tfsdk tags on API models and replace explicit object creation with ElementsAs
 //func (m FrameworkModel) ToTerraform(ctx context.Context, diagnostics *diag.Diagnostics, name, category, severity string) appsec.Framework {

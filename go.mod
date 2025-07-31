@@ -11,6 +11,7 @@ require (
 	github.com/mdboynton/cortex-cloud-go/api v0.0.0-00010101000000-000000000000
 	github.com/mdboynton/cortex-cloud-go/appsec v0.0.0-00010101000000-000000000000
 	github.com/mdboynton/cortex-cloud-go/cloudonboarding v0.0.0-00010101000000-000000000000
+	github.com/mdboynton/cortex-cloud-go/log v0.0.0-00010101000000-000000000000
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -56,6 +57,8 @@ replace github.com/mdboynton/cortex-cloud-go/internal/app => ../cortex-cloud-go/
 replace github.com/mdboynton/cortex-cloud-go/api => ../cortex-cloud-go/api
 
 replace github.com/mdboynton/cortex-cloud-go/enums => ../cortex-cloud-go/enums
+
+replace github.com/mdboynton/cortex-cloud-go/log => ../cortex-cloud-go/log
 
 replace github.com/mdboynton/cortex-cloud-go/appsec => ../cortex-cloud-go/appsec
 

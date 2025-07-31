@@ -9,7 +9,6 @@ import (
 	"os"
 	"slices"
 
-	//"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/api"
 	cloudOnboardingDataSources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/data_sources/cloud_onboarding"
 	models "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/provider"
 	appSecResources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/resources/application_security"
@@ -17,6 +16,7 @@ import (
 	sdk "github.com/mdboynton/cortex-cloud-go/api"
 	"github.com/mdboynton/cortex-cloud-go/appsec"
 	"github.com/mdboynton/cortex-cloud-go/cloudonboarding"
+	"github.com/mdboynton/cortex-cloud-go/log"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -45,7 +45,6 @@ type CortexCloudProvider struct {
 func (p *CortexCloudProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			// TODO: add config_file
 			"api_url": schema.StringAttribute{
 				Optional: true,
 				Description: fmt.Sprintf("The API URL of your Cortex Cloud tenant. "+
@@ -144,9 +143,18 @@ func (p *CortexCloudProvider) DataSources(ctx context.Context) []func() datasour
 func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	tflog.Debug(ctx, "Starting provider configuration")
 
-	// Print warning if debug logs are enabled
-	if slices.Contains([]string{"DEBUG", "TRACE"}, os.Getenv("TF_LOG")) || slices.Contains([]string{"DEBUG", "TRACE"}, os.Getenv("TF_LOG_PROVIDER")) {
-		tflog.Warn(ctx, "Debug logging enabled. Be aware that your API key and key ID will be visible in the provider log output!")
+	// Set log level according to Terraform environment variables and print 
+	// warning message if debug logs are enabled
+	var logLevel string
+	if slices.ContainsFunc([]string{"DEBUG", "TRACE"}, func(s string) bool {
+		return s == os.Getenv("TF_LOG") || s == os.Getenv("TF_LOG_PROVIDER")
+	}) {
+		logLevel = "detailed"
+		tflog.Warn(ctx, "Debug logging enabled. Be aware that your API key "+
+						"and key ID will be visible in the provider log "+
+						"output!")
+	} else {
+		logLevel = "quiet"
 	}
 
 	// Retrieve configuration values from provider block
@@ -161,12 +169,15 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 		err          error
 	)
 
+	// If the config_file argument is defined, initialize SDK client config 
+	// using values stored in the provided file
 	if !providerConfig.ConfigFile.IsNull() && !providerConfig.ConfigFile.IsUnknown() {
 		configFile := providerConfig.ConfigFile.ValueString()
 
 		if configFile != "" {
 			clientConfig, err = sdk.NewConfigFromFile(configFile, providerConfig.CheckEnvironment.ValueBool())
 		}
+	// Otherwise, configure SDK client using values from provider block
 	} else {
 		clientConfig = sdk.NewConfig(
 			providerConfig.ApiUrl.ValueString(),
@@ -178,14 +189,18 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 			sdk.WithTimeout(int(providerConfig.RequestTimeout.ValueInt32())),
 			//sdk.WithRetryMaxDelay(providerConfig.RetryMaxDelay),
 			sdk.WithCrashStackDir(providerConfig.CrashStackDir.ValueString()),
+			sdk.WithLogger(log.TflogAdapter{}),
+			sdk.WithLogLevel(logLevel),
 		)
 	}
 
+	// Validate SDK client configuration
 	if err = clientConfig.Validate(); err != nil {
 		resp.Diagnostics.AddError("Cortex Cloud SDK Configuration Error", err.Error())
 		return
 	}
 
+	// Initialize SDK clients
 	clients := models.CortexCloudSDKClients{}
 
 	appSecClient, err := appsec.NewClient(clientConfig)
@@ -201,11 +216,13 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 	}
 
 	tflog.Debug(ctx, "Cortex Cloud API client setup complete")
-
-		
+	
+	// Attach SDK clients to model
 	clients.AppSec = appSecClient
 	clients.CloudOnboarding = cloudOnboardingClient
 
+	// Assign clients model pointer to ProviderData to allow resources and 
+	// data sources to access SDK functions
 	resp.DataSourceData = &clients
 	resp.ResourceData = &clients
 }
