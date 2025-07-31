@@ -15,7 +15,7 @@ import (
 // PanicHandler is a global panic handler to catch all unexpected errors to
 // prevent the provider from crashing.
 //
-// The crash stack is written into a local text file
+// The crash stack is written into a local text file.
 func PanicHandler(diagnostics *diag.Diagnostics) {
 	if r := recover(); r != nil {
 		programCounter, _, _, ok := runtime.Caller(2) // 1=the panic, 2=who called the panic
@@ -28,7 +28,7 @@ func PanicHandler(diagnostics *diag.Diagnostics) {
 		funcName := programCounterFunc.Name()
 		message := fmt.Sprintf("An unexpected error occurred in %s.\n\n%v", funcName, r)
 
-		// write stack trace to disk so we don't dump on the console
+		// Write stack trace to disk so we don't dump on the console
 		fileContents := fmt.Sprintf("%s\n\n%s", funcName, debug.Stack())
 		file, err := os.CreateTemp("", "terraform_cortexcloud_crash_stack.*.txt")
 
