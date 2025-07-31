@@ -1,3 +1,6 @@
+// Copyright (c) Palo Alto Networks, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package util
 
 import (
@@ -13,11 +16,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
-
-type PolicyRuleOrderMapTuple struct {
-    Order int
-    Position int
-}
 
 type ModelWithAttributes interface {
 	GetAttributes() map[string]schema.Attribute // workaround because NestedAttributeObject and SingleNestedAttribute do not share a base type
@@ -472,7 +470,7 @@ func ConvertBaseStringArrayToPrimitiveStringArray(v []types.String) []string {
 // </summary>
 // <param name="v">Array of golang primitive interface</param>
 // <returns>Terraform list of strings</returns>
-func ConvertPrimitiveInterfaceArrayToStringList(ctx context.Context, diagnostics *diag.Diagnostics, v []interface{}) (types.List, string) {
+func ConvertPrimitiveInterfaceArrayToStringList(ctx context.Context, diagnostics *diag.Diagnostics, v []any) (types.List, string) {
 	if v == nil {
 		return types.ListNull(types.StringType), ""
 	}
