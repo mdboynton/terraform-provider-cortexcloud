@@ -24,7 +24,7 @@ import (
 // If the environment variable is not set, is set to an empty value, or is unable
 // to be converted into the reciever type, the function will exit without
 // modifying reciever and return an error.
-func GetEnvironmentVariable(name string, reciever interface{}) error {
+func GetEnvironmentVariable(name string, reciever any) error {
 	value := os.Getenv(name)
 	if value == "" {
 		return nil

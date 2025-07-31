@@ -470,7 +470,7 @@ func ConvertBaseStringArrayToPrimitiveStringArray(v []types.String) []string {
 // </summary>
 // <param name="v">Array of golang primitive interface</param>
 // <returns>Terraform list of strings</returns>
-func ConvertPrimitiveInterfaceArrayToStringList(ctx context.Context, diagnostics *diag.Diagnostics, v []interface{}) (types.List, string) {
+func ConvertPrimitiveInterfaceArrayToStringList(ctx context.Context, diagnostics *diag.Diagnostics, v []any) (types.List, string) {
 	if v == nil {
 		return types.ListNull(types.StringType), ""
 	}
