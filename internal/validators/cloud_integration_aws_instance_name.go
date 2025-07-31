@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/util"
+	"github.com/mdboynton/cortex-cloud-go/enums"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -48,7 +48,7 @@ func (v validateCloudIntegrationInstanceName) ValidateString(ctx context.Context
 	cloudProviderName := cloudProvider.ValueString()
 
 	cloudFormationStackNameRegexp := "^[a-zA-Z][-a-zA-Z0-9]*$"
-	isAws := (cloudProviderName == util.CloudIntegrationCloudProviderEnumAws)
+	isAws := (cloudProviderName == enums.CloudProviderAWS.String())
 	isValidStackName, err := regexp.Match(cloudFormationStackNameRegexp, []byte(instanceName))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -64,6 +64,4 @@ func (v validateCloudIntegrationInstanceName) ValidateString(ctx context.Context
 			fmt.Sprintf("Value must satisfy regex pattern \"%s\" for AWS integrations", cloudFormationStackNameRegexp),
 		)
 	}
-
-	return
 }
