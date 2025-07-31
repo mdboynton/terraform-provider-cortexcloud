@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/mdboynton/cortex-cloud-go/cloudonboarding"
+	"github.com/mdboynton/cortex-cloud-go/enums"
 
 	providerModels "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/provider"
 	models "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/cloud_onboarding"
@@ -82,11 +83,11 @@ func (r *CloudIntegrationInstanceDataSource) Schema(ctx context.Context, req dat
 								Computed: true,
 								Validators: []validator.String{
 									stringvalidator.OneOf(
-										util.CloudIntegrationRegistryScanningTypeEnums...,
+										enums.AllRegistryScanningTypes()...,
 									),
 									validators.AlsoRequiresOnStringValues(
 										[]string{
-											util.CloudIntegrationRegistryScanningTypeEnumTagsModifiedDays,
+											enums.RegistryScanningTypeTagsModifiedDays.String(),
 										},
 										path.MatchRelative().AtParent().AtName("last_days"),
 									),
@@ -131,7 +132,7 @@ func (r *CloudIntegrationInstanceDataSource) Schema(ctx context.Context, req dat
 				Computed: true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(
-						util.CloudIntegrationCloudProviderEnums...,
+						enums.AllCloudProviders()...,
 					),
 				},
 			},
@@ -141,7 +142,7 @@ func (r *CloudIntegrationInstanceDataSource) Schema(ctx context.Context, req dat
 				Computed: true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(
-						util.CloudIntegrationCloudProviderEnums...,
+						enums.AllCloudProviders()...,
 					),
 				},
 			},
@@ -207,7 +208,7 @@ func (r *CloudIntegrationInstanceDataSource) Schema(ctx context.Context, req dat
 						Computed:    true,
 						Validators: []validator.String{
 							stringvalidator.OneOf(
-								util.CloudIntegrationScanModeEnums...,
+								enums.AllScanModes()...
 							),
 						},
 					},
