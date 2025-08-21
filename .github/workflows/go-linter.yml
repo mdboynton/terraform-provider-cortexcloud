@@ -1,5 +1,5 @@
 name: 'Go Linter'
-run-name: '${{ github.actor }} triggered a run on ${{ github.ref_name }}'
+run-name: '[${{ github.actor }}] Go Linter'
 on: [push]
   #pull_request:
   #  branches:
