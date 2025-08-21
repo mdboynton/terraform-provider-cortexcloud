@@ -25,4 +25,16 @@ jobs:
       - name: 'Check Header Compliance'
         run: copywrite headers --config .copywrite.hcl --plan
         working-directory: 'terraform-provider-cortexcloud'
-        
+     
+      - name: 'Notify On Failure'
+        if: failure()
+        run: |
+          echo "Detected files with missing copyright headers."
+          echo ""
+          echo "To resolve this error, install the copywrite utility by following the instructions at: https://github.com/hashicorp/copywrite"
+          echo ""
+          echo "Then, run the following command from the root project directory to generate missing headers:"
+          echo ""
+          echo "    copywrite headers --config .copywrite.hcl"
+          echo ""
+          echo "Finally, commit the changes and review the result of this job to confirm that the error has been resolved."
