@@ -282,20 +282,63 @@ func (r *AuthenticationSettingsResource) Create(ctx context.Context, req resourc
 		return
 	}
 
-	metadata, err := r.client.GetIDPMetadata(ctx)
+	allAuthSettings, err := r.client.ListAuthSettings(ctx)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating Authentication Settings",
-			fmt.Sprintf("Error retrieving IDP metadata: %s", err.Error()),
+			fmt.Sprintf("Error reading authentication settings after creation: %s", err.Error()),
 		)
 		return
 	}
 
-	// Populate metadata values in model
-	plan.TenantID = types.StringValue(metadata.Data.TenantID)
-	plan.SpEntityID = types.StringValue(metadata.Data.SpEntityID)
-	plan.SpLogoutURL = types.StringValue(metadata.Data.SpLogoutURL)
-	plan.SpURL = types.StringValue(metadata.Data.SpURL)
+	var authSettings *platform.AuthSettings
+	for i, as := range allAuthSettings.Reply {
+		if as.Name == plan.Name.ValueString() && as.Domain == plan.Domain.ValueString() {
+			authSettings = &allAuthSettings.Reply[i]
+			break
+		}
+	}
+
+	if authSettings == nil {
+		resp.Diagnostics.AddError(
+			"Error Creating Authentication Settings",
+			"Could not find the authentication settings after creation.",
+		)
+		return
+	}
+
+	// Populate values from the read response
+	plan.Name = types.StringValue(authSettings.Name)
+	plan.DefaultRole = types.StringValue(authSettings.DefaultRole)
+	plan.IsAccountRole = types.BoolValue(authSettings.IsAccountRole)
+	plan.Domain = types.StringValue(authSettings.Domain)
+	plan.TenantID = types.StringValue(authSettings.TenantID)
+	plan.IdpEnabled = types.BoolValue(authSettings.IDPEnabled)
+	plan.IdpSsoUrl = types.StringValue(authSettings.IDPSingleSignOnURL)
+	plan.IdpCertificate = types.StringValue(authSettings.IDPCertificate)
+	plan.IdpIssuer = types.StringValue(authSettings.IDPIssuer)
+	plan.MetadataURL = types.StringValue(authSettings.MetadataURL)
+	plan.SpEntityID = types.StringValue(authSettings.SpEntityID)
+	plan.SpLogoutURL = types.StringValue(authSettings.SpLogoutURL)
+	plan.SpURL = types.StringValue(authSettings.SpURL)
+
+	if plan.Mappings == nil {
+		plan.Mappings = &models.MappingsModel{}
+	}
+	plan.Mappings.Email = types.StringValue(authSettings.Mappings.Email)
+	plan.Mappings.FirstName = types.StringValue(authSettings.Mappings.FirstName)
+	plan.Mappings.LastName = types.StringValue(authSettings.Mappings.LastName)
+	plan.Mappings.GroupName = types.StringValue(authSettings.Mappings.GroupName)
+
+	if plan.AdvancedSettings == nil {
+		plan.AdvancedSettings = &models.AdvancedSettingsModel{}
+	}
+	plan.AdvancedSettings.RelayState = types.StringValue(authSettings.AdvancedSettings.RelayState)
+	plan.AdvancedSettings.IdpSingleLogoutURL = types.StringValue(authSettings.AdvancedSettings.IDPSingleLogoutURL)
+	plan.AdvancedSettings.ServiceProviderPublicCert = types.StringValue(authSettings.AdvancedSettings.ServiceProviderPublicCert)
+	plan.AdvancedSettings.ServiceProviderPrivateKey = types.StringValue(authSettings.AdvancedSettings.ServiceProviderPrivateKey)
+	plan.AdvancedSettings.AuthnContextEnabled = types.BoolValue(authSettings.AdvancedSettings.AuthnContextEnabled)
+	plan.AdvancedSettings.ForceAuthn = types.BoolValue(authSettings.AdvancedSettings.ForceAuthn)
 
 	// Set state to fully populated data
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
