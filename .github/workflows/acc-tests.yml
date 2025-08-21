@@ -16,13 +16,32 @@ jobs:
     runs-on: ubuntu-latest
     environment: susanpolgar # Internal Cortex Cloud test instance
     steps:
-      - name: Checkout
+      - name: 'Checkout Provider Code'
         uses: actions/checkout@v4
+        with:
+          path: 'terraform-provider-cortexcloud'
 
-      - name: Set up Go
+      - name: 'Checkout SDK Code'
+        uses: actions/checkout@v4
+        with:
+          repository: 'mdboynton/cortex-cloud-go'
+          token: '${{ secrets.GH_PAT_CC_SDK_TF_PROVIDER }}'
+          path: 'cortex-cloud-go'
+
+      - name: 'Set up Go'
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version-file: 'terraform-provider-cortexcloud/go.mod'
+          cache: true
+          cache-dependency-path: |
+            terraform-provider-cortexcloud/go.sum
+            cortex-cloud-go/go.sum
+    
+        #- name: 'Run Go Linter'
+        #  uses: golangci/golangci-lint-action@v6
+        #  with:
+        #    version: v1.59
+        #    working-directory: 'terraform-provider-cortexcloud'
       
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
