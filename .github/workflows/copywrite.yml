@@ -1,0 +1,29 @@
+name: 'Copywrite'
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+  # Uncomment for testing 
+  push:
+    branches:
+      - auth-settings
+
+jobs:
+  check-copywrite-headers:
+    name: 'Check Copywrite Headers'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Provider'
+        uses: actions/checkout@v4
+        with:
+          path: 'terraform-provider-cortexcloud'
+      
+      - name: 'Setup Copywrite'
+        uses: hashicorp/setup-copywrite@867a1a2a064a0626db322392806428f7dc59cb3e # v1.1.2
+
+      - name: 'Check Header Compliance'
+        with:
+          working-directory: 'terraform-provider-cortexcloud'
+        run: copywrite headers --config .copywrite.hcl --plan
+        

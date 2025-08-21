@@ -20,9 +20,9 @@ jobs:
         with:
           path: 'terraform-provider-cortexcloud'
 
-      - name: 'Set up Go'
+      - name: 'Setup Go'
         uses: actions/setup-go@v5
-        with
+        with:
           go-version-file: 'terraform-provider-cortexcloud/go.mod'
           cache: true
           cache-dependency-path: terraform-provider-cortexcloud/go.sum
