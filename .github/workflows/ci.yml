@@ -29,9 +29,11 @@ jobs:
 
       - name: Run Go Linter (Provider and SDK only)
         uses: golangci/golangci-lint-action@v6
+        env:
+          GOFLAGS: -mod=vendor
         with:
           version: v1.59
-          args: --timeout=5m --mod=vendor . ./internal/... ./vendor/github.com/mdboynton/cortex-cloud-go/...
+          args: --timeout=5m . ./internal/... ./vendor/github.com/mdboynton/cortex-cloud-go/...
 
   copyright:
     name: Copyright
