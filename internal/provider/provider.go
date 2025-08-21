@@ -179,7 +179,8 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 		configFile := providerConfig.ConfigFile.ValueString()
 
 		if configFile != "" {
-			clientConfig, err = sdk.NewConfigFromFile(configFile, providerConfig.CheckEnvironment.ValueBool())
+			// TODO: handle error
+			clientConfig, _ = sdk.NewConfigFromFile(configFile, providerConfig.CheckEnvironment.ValueBool())
 		}
 		// Otherwise, configure SDK client using values from provider block and
 		// environment variables

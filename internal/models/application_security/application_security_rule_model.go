@@ -193,10 +193,17 @@ func (m *ApplicationSecurityRuleModel) RefreshPropertyValues(ctx context.Context
 		})
 	}
 
+	var conversionDiags diag.Diagnostics
 	labels, diags := types.SetValueFrom(ctx, types.StringType, response.Labels)
+	conversionDiags.Append(diags...)
+
 	mitreTactics, diags := types.SetValueFrom(ctx, types.StringType, response.MitreTactics)
+	conversionDiags.Append(diags...)
+
 	mitreTechniques, diags := types.SetValueFrom(ctx, types.StringType, response.MitreTechniques)
-	diagnostics.Append(diags...)
+	conversionDiags.Append(diags...)
+
+	diagnostics.Append(conversionDiags...)
 
 	if diagnostics.HasError() {
 		return

@@ -399,7 +399,7 @@ func (r *ApplicationSecurityRuleResource) Create(ctx context.Context, req resour
 		return
 	}
 
-	if validateResponse.IsValid == nil || *validateResponse.IsValid == false {
+	if !*validateResponse.IsValid {
 		resp.Diagnostics.AddError(
 			"Error Creating Or Cloning Application Security Rule",
 			fmt.Sprintf("rule validation failed: %+v", validateResponse),

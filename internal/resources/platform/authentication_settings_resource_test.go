@@ -21,10 +21,11 @@ func TestUnitAuthenticationSettingsResource(t *testing.T) {
 		if r.Method == http.MethodPost {
 			if strings.HasSuffix(r.URL.String(), "/create") || strings.HasSuffix(r.URL.String(), "/delete") {
 				w.WriteHeader(http.StatusOK)
-				fmt.Fprintln(w, `{ "reply": true }`)
+				fmt.Fprintln(w, `{ "reply": true }`) //nolint:errcheck
 				return
 			} else if strings.HasSuffix(r.URL.String(), "/get/settings") {
 				w.WriteHeader(http.StatusOK)
+				//nolint:errcheck
 				fmt.Fprintln(w, `
 				{
 					"reply": [

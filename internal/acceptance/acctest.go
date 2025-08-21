@@ -4,7 +4,6 @@
 package acceptance
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -25,18 +24,18 @@ func testAccPreCheck(t *testing.T) {
 	if v := os.Getenv("CORTEX_API_KEY"); v == "" {
 		t.Fatal("CORTEX_API_KEY must be set for acceptance tests")
 	} else {
-		t.Log(fmt.Sprintf(`CORTEX_API_KEY="%s"`, v))
+		t.Logf(`CORTEX_API_KEY="%s"`, v)
 	}
 
 	if v := os.Getenv("CORTEX_API_KEY_ID"); v == "" {
 		t.Fatal("CORTEX_API_KEY_ID must be set for acceptance tests")
 	} else {
-		t.Log(fmt.Sprintf(`CORTEX_API_KEY_ID=%s`, v))
+		t.Logf(`CORTEX_API_KEY_ID=%s`, v)
 	}
 
 	if v := os.Getenv("CORTEX_API_URL"); v == "" {
 		t.Fatal("CORTEX_API_URL must be set for acceptance tests")
 	} else {
-		t.Log(fmt.Sprintf(`CORTEX_API_URL="%s"`, v))
+		t.Logf(`CORTEX_API_URL="%s"`, v)
 	}
 }

@@ -33,7 +33,16 @@ func PanicHandler(diagnostics *diag.Diagnostics) {
 		file, err := os.CreateTemp("", "terraform_cortexcloud_crash_stack.*.txt")
 
 		if err == nil {
-			defer file.Close()
+			defer func () {
+				closeErr := file.Close()
+				if closeErr != nil {
+					diagnostics.AddError(
+						"File Close Error",
+						fmt.Sprintf("error occured while attempting to close stack trace output file: %s", closeErr.Error()),
+					)
+					return
+				}
+			}()
 
 			_, err := file.WriteString(fileContents)
 			if err == nil {

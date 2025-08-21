@@ -23,9 +23,14 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.24.3'
           cache: true
           cache-dependency-path: './go.sum'
+
+      - name: Tidy and Vendor Dependencies
+        run: |
+          go mod tidy
+          go mod vendor
 
       - name: Run Go Linter (Provider and SDK only)
         uses: golangci/golangci-lint-action@v6
@@ -41,6 +46,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.3'
+          cache: true
+          cache-dependency-path: './go.sum'
 
       - name: Setup Copywrite
         uses: hashicorp/setup-copywrite@v1.1.2
@@ -72,7 +84,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.24.3'
           cache: true
           cache-dependency-path: './go.sum'
 
@@ -91,7 +103,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.24.3'
           cache: true
           cache-dependency-path: './go.sum'
 
