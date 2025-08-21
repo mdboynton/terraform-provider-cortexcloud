@@ -1,4 +1,5 @@
 name: 'Copywrite'
+run-name: '${{ github.actor }} triggered a run on ${{ github.ref_name }}'
 on:
   pull_request:
     branches:
