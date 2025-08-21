@@ -31,7 +31,7 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.59
-          args: main.go internal/... vendor/github.com/mdboynton/cortex-cloud-go/...
+          args: . ./internal/... ./vendor/github.com/mdboynton/cortex-cloud-go/...
 
   copyright:
     name: Copyright
