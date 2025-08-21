@@ -27,6 +27,7 @@ jobs:
         with:
           repository: mdboynton/cortex-cloud-go
           path: cortex-cloud-go
+          token: ${{ secrets.GH_PAT_CC_SDK_TF_PROVIDER }}
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -98,6 +99,7 @@ jobs:
         with:
           repository: mdboynton/cortex-cloud-go
           path: cortex-cloud-go
+          token: ${{ secrets.GH_PAT_CC_SDK_TF_PROVIDER }}
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -126,6 +128,7 @@ jobs:
         with:
           repository: mdboynton/cortex-cloud-go
           path: cortex-cloud-go
+          token: ${{ secrets.GH_PAT_CC_SDK_TF_PROVIDER }}
 
       - name: Setup Go
         uses: actions/setup-go@v5
