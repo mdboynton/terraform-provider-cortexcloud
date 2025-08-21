@@ -1,20 +1,12 @@
-// go 1.24.3
-//
-// use (
-// 	.
-// 	../cortex-cloud-go
-// 	../cortex-cloud-go/api
-// 	../cortex-cloud-go/enums
-// 	../cortex-cloud-go/errors
-// 	../cortex-cloud-go/appsec
-// 	../cortex-cloud-go/cloudonboarding
-// 	// ../cortex-cloud-go/platform
-// 	// ../cortex-cloud-go/internal/app
-// )
-
 go 1.24.3
 
 use (
 	.
-	./vendor/cortex-cloud-go
+	./vendor/cortex-cloud-go/api
+	./vendor/cortex-cloud-go/appsec
+	./vendor/cortex-cloud-go/cloudonboarding
+	./vendor/cortex-cloud-go/enums
+	./vendor/cortex-cloud-go/errors
+	./vendor/cortex-cloud-go/platform
+	./vendor/cortex-cloud-go/internal/app
 )
