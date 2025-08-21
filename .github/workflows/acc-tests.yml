@@ -34,9 +34,7 @@ jobs:
         with:
           go-version-file: 'terraform-provider-cortexcloud/go.mod'
           cache: true
-          cache-dependency-path: |
-            terraform-provider-cortexcloud/go.sum
-            vendor/cortex-cloud-go/go.sum
+          cache-dependency-path: terraform-provider-cortexcloud/go.sum
     
         #- name: 'Run Go Linter'
         #  uses: golangci/golangci-lint-action@v6
@@ -58,4 +56,4 @@ jobs:
           CORTEX_API_KEY_ID: ${{ secrets.CORTEX_API_KEY_ID }}
         #run: go test -v ./...
         #run: go test -v -cover -race ./...
-        run: go test -v -cover -race $(go list ./... | grep -v /vendor/)
+        run: go test -v -cover -race -mod=vendor $(go list ./... | grep -v /vendor/)
