@@ -25,8 +25,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'mdboynton/cortex-cloud-go'
-          ref: 'auth-settings'
-          #ref: 'dev'
+          ref: 'dev'
           token: '${{ secrets.GH_PAT_CC_SDK_TF_PROVIDER }}'
           path: 'cortex-cloud-go'
 

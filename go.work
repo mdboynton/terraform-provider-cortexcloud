@@ -8,6 +8,6 @@ use (
 	../cortex-cloud-go/errors
 	../cortex-cloud-go/appsec
 	../cortex-cloud-go/cloudonboarding
-	../cortex-cloud-go/platform
-	../cortex-cloud-go/internal/app
+	// ../cortex-cloud-go/platform
+	// ../cortex-cloud-go/internal/app
 )
