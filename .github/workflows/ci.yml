@@ -43,10 +43,10 @@ jobs:
 
       - name: Run Go Linter
         uses: golangci/golangci-lint-action@v6
-        working-directory: terraform-provider-cortexcloud
         env:
           GOFLAGS: -mod=vendor
         with:
+          working-directory: terraform-provider-cortexcloud
           version: v1.59
           args: --timeout=5m ./...
 
