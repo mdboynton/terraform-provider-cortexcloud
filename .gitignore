@@ -1,4 +1,6 @@
 !/.gitignore
 
+test/
+
 # Hidden files/directories
 .*

@@ -458,13 +458,12 @@ func (r *AuthenticationSettingsResource) Delete(ctx context.Context, req resourc
 	}
 
 	// Delete resource
-	// TODO: The go-cortex-cloud library does not yet have a function for deleting authentication settings
-	//err := r.client.DeleteAuthSettings(ctx, state.Name.ValueString(), state.Domain.ValueString())
-	//if err != nil {
-	//	resp.Diagnostics.AddError(
-	//		"Error Deleting Authentication Settings",
-	//		err.Error(),
-	//	)
-	//	return
-	//}
+	_, err := r.client.DeleteAuthSettings(ctx, state.Domain.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Deleting Authentication Settings",
+			err.Error(),
+		)
+		return
+	}
 }
