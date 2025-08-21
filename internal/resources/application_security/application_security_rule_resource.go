@@ -152,8 +152,8 @@ func (r *ApplicationSecurityRuleResource) Schema(ctx context.Context, req resour
 						},
 						"definition": schema.StringAttribute{
 							Description: "TODO",
-							Optional: true,
-							Computed: true,
+							Optional:    true,
+							Computed:    true,
 							//PlanModifiers: []planmodifier.String{
 							//	planmodifiers.AddFrameworkDefinitionMetadata(),
 							//},
@@ -385,7 +385,7 @@ func (r *ApplicationSecurityRuleResource) Create(ctx context.Context, req resour
 	validateRequestData := []appsec.ValidateRequest{}
 	for _, framework := range createRequest.Frameworks {
 		validateRequestData = append(validateRequestData, appsec.ValidateRequest{
-			Framework: framework.Name,
+			Framework:  framework.Name,
 			Definition: framework.Definition,
 		})
 	}

@@ -21,14 +21,6 @@ jobs:
         with:
           path: 'terraform-provider-cortexcloud'
 
-      #- name: 'Checkout SDK Code'
-      #  uses: actions/checkout@v4
-      #  with:
-      #    repository: 'mdboynton/cortex-cloud-go'
-      #    ref: 'dev'
-      #    token: '${{ secrets.GH_PAT_CC_SDK_TF_PROVIDER }}'
-      #    path: 'cortex-cloud-go'
-
       - name: 'Set up Go'
         uses: actions/setup-go@v5
         with:
@@ -36,11 +28,11 @@ jobs:
           cache: true
           cache-dependency-path: terraform-provider-cortexcloud/go.sum
     
-        #- name: 'Run Go Linter'
-        #  uses: golangci/golangci-lint-action@v6
-        #  with:
-        #    version: v1.59
-        #    working-directory: 'terraform-provider-cortexcloud'
+      - name: 'Run Go Linter'
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.59
+          working-directory: 'terraform-provider-cortexcloud'
       
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
@@ -54,6 +46,4 @@ jobs:
           CORTEX_API_URL: ${{ vars.CORTEX_API_URL }}
           CORTEX_API_KEY: ${{ secrets.CORTEX_API_KEY }}
           CORTEX_API_KEY_ID: ${{ secrets.CORTEX_API_KEY_ID }}
-        #run: go test -v ./...
-        #run: go test -v -cover -race ./...
         run: go test -v -cover -race -mod=vendor $(go list ./... | grep -v /vendor/)

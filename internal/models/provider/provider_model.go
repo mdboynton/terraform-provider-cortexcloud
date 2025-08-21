@@ -26,5 +26,5 @@ type CortexCloudSDKClients struct {
 	Config          sdk.Config
 	AppSec          *appsec.Client
 	CloudOnboarding *cloudonboarding.Client
-	Platform 		*platform.Client
+	Platform        *platform.Client
 }

@@ -4,8 +4,8 @@
 package acceptance
 
 import (
-	"os"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/provider"

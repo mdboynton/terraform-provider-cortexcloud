@@ -9,21 +9,21 @@ import (
 
 // AuthenticationSettingsModel is the model for the authentication_settings resource.
 type AuthenticationSettingsModel struct {
-	Name                      types.String           `tfsdk:"name"`
-	DefaultRole               types.String           `tfsdk:"default_role"`
-	IsAccountRole             types.Bool             `tfsdk:"is_account_role"`
-	Domain                    types.String           `tfsdk:"domain"`
-	Mappings                  *MappingsModel         `tfsdk:"mappings"`
-	AdvancedSettings          *AdvancedSettingsModel `tfsdk:"advanced_settings"`
-	TenantID                  types.String           `tfsdk:"tenant_id"`
-	IdpEnabled                types.Bool             `tfsdk:"idp_enabled"`
-	IdpSsoUrl                 types.String           `tfsdk:"idp_sso_url"`
-	IdpCertificate            types.String           `tfsdk:"idp_certificate"`
-	IdpIssuer                 types.String           `tfsdk:"idp_issuer"`
-	MetadataURL               types.String           `tfsdk:"metadata_url"`
-	SpEntityID                types.String           `tfsdk:"sp_entity_id"`
-	SpLogoutURL               types.String           `tfsdk:"sp_logout_url"`
-	SpURL                     types.String           `tfsdk:"sp_url"`
+	Name             types.String           `tfsdk:"name"`
+	DefaultRole      types.String           `tfsdk:"default_role"`
+	IsAccountRole    types.Bool             `tfsdk:"is_account_role"`
+	Domain           types.String           `tfsdk:"domain"`
+	Mappings         *MappingsModel         `tfsdk:"mappings"`
+	AdvancedSettings *AdvancedSettingsModel `tfsdk:"advanced_settings"`
+	TenantID         types.String           `tfsdk:"tenant_id"`
+	IdpEnabled       types.Bool             `tfsdk:"idp_enabled"`
+	IdpSsoUrl        types.String           `tfsdk:"idp_sso_url"`
+	IdpCertificate   types.String           `tfsdk:"idp_certificate"`
+	IdpIssuer        types.String           `tfsdk:"idp_issuer"`
+	MetadataURL      types.String           `tfsdk:"metadata_url"`
+	SpEntityID       types.String           `tfsdk:"sp_entity_id"`
+	SpLogoutURL      types.String           `tfsdk:"sp_logout_url"`
+	SpURL            types.String           `tfsdk:"sp_url"`
 }
 
 // MappingsModel is the model for the mappings nested attribute.

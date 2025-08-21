@@ -9,8 +9,8 @@ import (
 	"github.com/mdboynton/cortex-cloud-go/cloudonboarding"
 	"github.com/mdboynton/cortex-cloud-go/enums"
 
-	providerModels "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/provider"
 	models "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/cloud_onboarding"
+	providerModels "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/provider"
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/util"
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/validators"
 
