@@ -1,5 +1,6 @@
-name: 'CI'
+name: CI
 run-name: '[${{ github.actor }}] CI'
+
 on:
   pull_request:
     branches:
@@ -12,38 +13,38 @@ on:
 
 jobs:
   lint:
-    name: 'Lint'
+    name: Lint
     runs-on: ubuntu-latest
     steps:
-      - name: 'Checkout'
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 'Setup Go'
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version-file: './go.mod'
           cache: true
           cache-dependency-path: './go.sum'
 
-      - name: 'Run Go Linter'
+      - name: Run Go Linter
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.59
 
   copyright:
-    name: 'Copyright'
+    name: Copyright
     runs-on: ubuntu-latest
     steps:
-      - name: 'Checkout'
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 'Setup Copywrite'
+      - name: Setup Copywrite
         uses: hashicorp/setup-copywrite@v1.1.2
 
-      - name: 'Check Header Compliance'
+      - name: Check Header Compliance
         run: copywrite headers --config .copywrite.hcl --plan
 
-      - name: 'Notify On Failure'
+      - name: Notify On Failure
         if: failure()
         run: |
           echo "Detected files with missing copyright headers."
@@ -57,33 +58,33 @@ jobs:
           echo "Finally, commit the changes and review the result of this job to confirm that the error has been resolved."
 
   unit-tests:
-    name: 'Unit Tests'
+    name: Unit Tests
     runs-on: ubuntu-latest
     needs: [lint, copyright]
     steps:
-      - name: 'Checkout'
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 'Setup Go'
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version-file: './go.mod'
           cache: true
           cache-dependency-path: './go.sum'
 
-      - name: 'Run Unit Tests'
+      - name: Run Unit Tests
         run: go test -v -cover -race -mod=vendor $(go list ./... | grep -v /vendor/ | grep -v /acceptance/)
 
   acceptance-tests:
-    name: 'Acceptance Tests'
+    name: Acceptance Tests
     runs-on: ubuntu-latest
     needs: [unit-tests]
     environment: susanpolgar
     steps:
-      - name: 'Checkout'
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 'Setup Go'
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version-file: './go.mod'
