@@ -17,7 +17,7 @@ jobs:
     environment: susanpolgar # Internal Cortex Cloud test instance
     steps:
       - name: Checkout
-        user: actions/checkout@v4
+        uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v5
