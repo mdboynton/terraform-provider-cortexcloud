@@ -27,11 +27,11 @@ jobs:
           cache: true
           cache-dependency-path: './go.sum'
 
-      - name: Run Go Linter
+      - name: Run Go Linter (Provider and SDK only)
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.59
-          args: . ./internal/... ./vendor/github.com/mdboynton/cortex-cloud-go/...
+          args: --timeout=5m --mod=vendor . ./internal/... ./vendor/github.com/mdboynton/cortex-cloud-go/...
 
   copyright:
     name: Copyright
