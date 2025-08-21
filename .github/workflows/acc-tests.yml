@@ -1,0 +1,38 @@
+name: 'Acceptance Tests'
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+  # Uncomment for testing 
+  push:
+    branches:
+      #- my-branch-name
+      - auth-settings
+
+  jobs:
+    run-acc-test-suite:
+      name: 'Run Acceptance Test Suite'
+      runs-on: ubuntu-latest
+      environment: susanpolgar # Internal Cortex Cloud test instance
+      steps:
+        - name: Checkout
+          user: actions/checkout@v4
+
+        - name: Set up Go
+          uses: actions/setup-go@v5
+          with:
+            go-version: '1.22'
+        
+        - name: Set up Terraform
+          uses: hashicorp/setup-terraform@v3
+          with:
+            terraform_version: '1.12.1'
+
+        - name: Run Acceptance Tests
+          env:
+            TF_ACC: 1
+            CORTEX_API_URL: ${{ vars.CORTEX_API_URL }}
+            CORTEX_API_KEY: ${{ secrets.CORTEX_API_KEY }}
+            CORTEX_API_KEY_ID: ${{ secrets.CORTEX_API_KEY_ID }}
+          run: go test -v ./...
