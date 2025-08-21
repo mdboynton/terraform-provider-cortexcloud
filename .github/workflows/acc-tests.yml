@@ -49,9 +49,11 @@ jobs:
           terraform_version: '1.12.1'
 
       - name: Run Acceptance Tests
+        working-directory: 'terraform-provider-cortexcloud'
         env:
           TF_ACC: 1
           CORTEX_API_URL: ${{ vars.CORTEX_API_URL }}
           CORTEX_API_KEY: ${{ secrets.CORTEX_API_KEY }}
           CORTEX_API_KEY_ID: ${{ secrets.CORTEX_API_KEY_ID }}
-        run: go test -v ./...
+        #run: go test -v ./...
+        run: go test -v -cover -race ./...
