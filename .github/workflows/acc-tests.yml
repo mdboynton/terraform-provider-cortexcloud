@@ -16,18 +16,18 @@ jobs:
     runs-on: ubuntu-latest
     environment: susanpolgar # Internal Cortex Cloud test instance
     steps:
-      - name: 'Checkout Provider Code'
+      - name: 'Checkout'
         uses: actions/checkout@v4
         with:
           path: 'terraform-provider-cortexcloud'
 
-      - name: 'Checkout SDK Code'
-        uses: actions/checkout@v4
-        with:
-          repository: 'mdboynton/cortex-cloud-go'
-          ref: 'dev'
-          token: '${{ secrets.GH_PAT_CC_SDK_TF_PROVIDER }}'
-          path: 'cortex-cloud-go'
+      #- name: 'Checkout SDK Code'
+      #  uses: actions/checkout@v4
+      #  with:
+      #    repository: 'mdboynton/cortex-cloud-go'
+      #    ref: 'dev'
+      #    token: '${{ secrets.GH_PAT_CC_SDK_TF_PROVIDER }}'
+      #    path: 'cortex-cloud-go'
 
       - name: 'Set up Go'
         uses: actions/setup-go@v5
@@ -36,7 +36,7 @@ jobs:
           cache: true
           cache-dependency-path: |
             terraform-provider-cortexcloud/go.sum
-            cortex-cloud-go/go.sum
+            vendor/cortex-cloud-go/go.sum
     
         #- name: 'Run Go Linter'
         #  uses: golangci/golangci-lint-action@v6
@@ -57,4 +57,5 @@ jobs:
           CORTEX_API_KEY: ${{ secrets.CORTEX_API_KEY }}
           CORTEX_API_KEY_ID: ${{ secrets.CORTEX_API_KEY_ID }}
         #run: go test -v ./...
-        run: go test -v -cover -race ./...
+        #run: go test -v -cover -race ./...
+        run: go test -v -cover -race $(go list ./... | grep -v /vendor/)
