@@ -9,13 +9,15 @@ import (
 	"os"
 	"slices"
 
-	cloudOnboardingDataSources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/data_sources/cloud_onboarding"
 	models "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/provider"
 	appSecResources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/resources/application_security"
 	cloudOnboardingResources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/resources/cloud_onboarding"
+	platformResources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/resources/platform"
+	cloudOnboardingDataSources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/data_sources/cloud_onboarding"
 	sdk "github.com/mdboynton/cortex-cloud-go/api"
 	"github.com/mdboynton/cortex-cloud-go/appsec"
 	"github.com/mdboynton/cortex-cloud-go/cloudonboarding"
+	"github.com/mdboynton/cortex-cloud-go/platform"
 	"github.com/mdboynton/cortex-cloud-go/log"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -131,6 +133,7 @@ func (p *CortexCloudProvider) Resources(ctx context.Context) []func() resource.R
 	return []func() resource.Resource{
 		cloudOnboardingResources.NewCloudIntegrationTemplateResource,
 		appSecResources.NewApplicationSecurityRuleResource,
+		platformResources.NewAuthenticationSettingsResource,
 	}
 }
 
@@ -149,7 +152,7 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 	if slices.ContainsFunc([]string{"DEBUG", "TRACE"}, func(s string) bool {
 		return s == os.Getenv("TF_LOG") || s == os.Getenv("TF_LOG_PROVIDER")
 	}) {
-		logLevel = "detailed"
+		logLevel = "debug"
 		tflog.Warn(ctx, "Debug logging enabled. Be aware that your API key "+
 						"and key ID will be visible in the provider log "+
 						"output!")
@@ -171,6 +174,7 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 
 	// If the config_file argument is defined, initialize SDK client config 
 	// using values stored in the provided file
+	// TODO: validate required fields are non-empty and non-null (api url/port, etc)
 	if !providerConfig.ConfigFile.IsNull() && !providerConfig.ConfigFile.IsUnknown() {
 		configFile := providerConfig.ConfigFile.ValueString()
 
@@ -214,12 +218,19 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 		resp.Diagnostics.AddError("Cortex Cloud API Setup Error", err.Error())
 		return
 	}
+	
+	platformClient, err := platform.NewClient(clientConfig)
+	if err != nil {
+		resp.Diagnostics.AddError("Cortex Cloud API Setup Error", err.Error())
+		return
+	} 
 
 	tflog.Debug(ctx, "Cortex Cloud API client setup complete")
 	
 	// Attach SDK clients to model
 	clients.AppSec = appSecClient
 	clients.CloudOnboarding = cloudOnboardingClient
+	clients.Platform = platformClient
 
 	// Assign clients model pointer to ProviderData to allow resources and 
 	// data sources to access SDK functions
