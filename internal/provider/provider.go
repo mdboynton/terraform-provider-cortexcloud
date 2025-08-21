@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"strconv"
 
 	models "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/provider"
 	appSecResources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/resources/application_security"
@@ -174,19 +175,54 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 
 	// If the config_file argument is defined, initialize SDK client config 
 	// using values stored in the provided file
-	// TODO: validate required fields are non-empty and non-null (api url/port, etc)
 	if !providerConfig.ConfigFile.IsNull() && !providerConfig.ConfigFile.IsUnknown() {
 		configFile := providerConfig.ConfigFile.ValueString()
 
 		if configFile != "" {
 			clientConfig, err = sdk.NewConfigFromFile(configFile, providerConfig.CheckEnvironment.ValueBool())
 		}
-	// Otherwise, configure SDK client using values from provider block
+	// Otherwise, configure SDK client using values from provider block and 
+	// environment variables
 	} else {
+		// Get values of required configuration arguments
+		apiUrl := providerConfig.ApiUrl.ValueString()
+		apiKey := providerConfig.ApiKey.ValueString()
+		apiKeyId := int(providerConfig.ApiKeyId.ValueInt32())
+
+		if apiUrl == "" {
+			if v := os.Getenv("CORTEX_API_URL"); v == "" {
+				tflog.Error(ctx, `No value provided for required configuration argument "api_url" in provider block or CORTEX_API_URL environment variable.`)
+			} else {
+				apiUrl = v
+			}
+		}
+		tflog.Debug(ctx, fmt.Sprintf(`CORTEX_API_URL="%s"`, apiUrl))
+
+		if apiKey == "" {
+			if v := os.Getenv("CORTEX_API_KEY"); v == "" {
+				tflog.Error(ctx, `No value provided for required configuration argument "api_key" in provider block or CORTEX_API_KEY environment variable.`)
+			} else {
+				apiKey = v
+			}
+		}
+		tflog.Debug(ctx, fmt.Sprintf(`CORTEX_API_KEY="%s"`, apiKey))
+
+		if apiKeyId == 0 {
+			if v := os.Getenv("CORTEX_API_KEY_ID"); v == "" {
+				tflog.Error(ctx, `No value provided for required configuration argument "api_key_id" in provider block or CORTEX_API_KEY_ID environment variable.`)
+			} else {
+				apiKeyId, err = strconv.Atoi(v)
+				if err != nil {
+					tflog.Error(ctx, fmt.Sprintf(`Error occured while converting CORTEX_API_KEY_ID value to int: %s`, err.Error()))
+				}
+			}
+		}
+		tflog.Debug(ctx, fmt.Sprintf(`CORTEX_API_KEY_ID=%d`, apiKeyId))
+
 		clientConfig = sdk.NewConfig(
-			providerConfig.ApiUrl.ValueString(),
-			providerConfig.ApiKey.ValueString(),
-			int(providerConfig.ApiKeyId.ValueInt32()),
+			apiUrl,
+			apiKey,
+			apiKeyId,
 			providerConfig.CheckEnvironment.ValueBool(),
 			sdk.WithApiPort(int(providerConfig.ApiPort.ValueInt32())),
 			sdk.WithSkipVerifyCertificate(providerConfig.Insecure.ValueBool()),
