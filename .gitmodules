@@ -1,0 +1,3 @@
+[submodule "vendor/cortex-cloud-go"]
+	path = vendor/cortex-cloud-go
+	url = /Users/mboynton/Work/cortex-cloud-go
