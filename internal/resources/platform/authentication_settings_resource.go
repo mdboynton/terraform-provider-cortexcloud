@@ -230,6 +230,55 @@ func (r *AuthenticationSettingsResource) Configure(ctx context.Context, req reso
 	r.client = client.Platform
 }
 
+func (r *AuthenticationSettingsResource) findAuthSettings(ctx context.Context, name, domain string) (*platform.AuthSettings, error) {
+	allAuthSettings, err := r.client.ListAuthSettings(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, as := range allAuthSettings.Reply {
+		if as.Name == name && as.Domain == domain {
+			return &allAuthSettings.Reply[i], nil
+		}
+	}
+
+	return nil, nil
+}
+
+func (r *AuthenticationSettingsResource) refreshModelFromAPI(authSettings *platform.AuthSettings, model *models.AuthenticationSettingsModel) {
+	model.Name = types.StringValue(authSettings.Name)
+	model.DefaultRole = types.StringValue(authSettings.DefaultRole)
+	model.IsAccountRole = types.BoolValue(authSettings.IsAccountRole)
+	model.Domain = types.StringValue(authSettings.Domain)
+	model.TenantID = types.StringValue(authSettings.TenantID)
+	model.IdpEnabled = types.BoolValue(authSettings.IDPEnabled)
+	model.IdpSsoUrl = types.StringValue(authSettings.IDPSingleSignOnURL)
+	model.IdpCertificate = types.StringValue(authSettings.IDPCertificate)
+	model.IdpIssuer = types.StringValue(authSettings.IDPIssuer)
+	model.MetadataURL = types.StringValue(authSettings.MetadataURL)
+	model.SpEntityID = types.StringValue(authSettings.SpEntityID)
+	model.SpLogoutURL = types.StringValue(authSettings.SpLogoutURL)
+	model.SpURL = types.StringValue(authSettings.SpURL)
+
+	if model.Mappings == nil {
+		model.Mappings = &models.MappingsModel{}
+	}
+	model.Mappings.Email = types.StringValue(authSettings.Mappings.Email)
+	model.Mappings.FirstName = types.StringValue(authSettings.Mappings.FirstName)
+	model.Mappings.LastName = types.StringValue(authSettings.Mappings.LastName)
+	model.Mappings.GroupName = types.StringValue(authSettings.Mappings.GroupName)
+
+	if model.AdvancedSettings == nil {
+		model.AdvancedSettings = &models.AdvancedSettingsModel{}
+	}
+	model.AdvancedSettings.RelayState = types.StringValue(authSettings.AdvancedSettings.RelayState)
+	model.AdvancedSettings.IdpSingleLogoutURL = types.StringValue(authSettings.AdvancedSettings.IDPSingleLogoutURL)
+	model.AdvancedSettings.ServiceProviderPublicCert = types.StringValue(authSettings.AdvancedSettings.ServiceProviderPublicCert)
+	model.AdvancedSettings.ServiceProviderPrivateKey = types.StringValue(authSettings.AdvancedSettings.ServiceProviderPrivateKey)
+	model.AdvancedSettings.AuthnContextEnabled = types.BoolValue(authSettings.AdvancedSettings.AuthnContextEnabled)
+	model.AdvancedSettings.ForceAuthn = types.BoolValue(authSettings.AdvancedSettings.ForceAuthn)
+}
+
 // Create creates the resource and sets the initial Terraform state.
 func (r *AuthenticationSettingsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	defer util.PanicHandler(&resp.Diagnostics)
@@ -282,21 +331,13 @@ func (r *AuthenticationSettingsResource) Create(ctx context.Context, req resourc
 		return
 	}
 
-	allAuthSettings, err := r.client.ListAuthSettings(ctx)
+	authSettings, err := r.findAuthSettings(ctx, plan.Name.ValueString(), plan.Domain.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating Authentication Settings",
 			fmt.Sprintf("Error reading authentication settings after creation: %s", err.Error()),
 		)
 		return
-	}
-
-	var authSettings *platform.AuthSettings
-	for i, as := range allAuthSettings.Reply {
-		if as.Name == plan.Name.ValueString() && as.Domain == plan.Domain.ValueString() {
-			authSettings = &allAuthSettings.Reply[i]
-			break
-		}
 	}
 
 	if authSettings == nil {
@@ -308,37 +349,7 @@ func (r *AuthenticationSettingsResource) Create(ctx context.Context, req resourc
 	}
 
 	// Populate values from the read response
-	plan.Name = types.StringValue(authSettings.Name)
-	plan.DefaultRole = types.StringValue(authSettings.DefaultRole)
-	plan.IsAccountRole = types.BoolValue(authSettings.IsAccountRole)
-	plan.Domain = types.StringValue(authSettings.Domain)
-	plan.TenantID = types.StringValue(authSettings.TenantID)
-	plan.IdpEnabled = types.BoolValue(authSettings.IDPEnabled)
-	plan.IdpSsoUrl = types.StringValue(authSettings.IDPSingleSignOnURL)
-	plan.IdpCertificate = types.StringValue(authSettings.IDPCertificate)
-	plan.IdpIssuer = types.StringValue(authSettings.IDPIssuer)
-	plan.MetadataURL = types.StringValue(authSettings.MetadataURL)
-	plan.SpEntityID = types.StringValue(authSettings.SpEntityID)
-	plan.SpLogoutURL = types.StringValue(authSettings.SpLogoutURL)
-	plan.SpURL = types.StringValue(authSettings.SpURL)
-
-	if plan.Mappings == nil {
-		plan.Mappings = &models.MappingsModel{}
-	}
-	plan.Mappings.Email = types.StringValue(authSettings.Mappings.Email)
-	plan.Mappings.FirstName = types.StringValue(authSettings.Mappings.FirstName)
-	plan.Mappings.LastName = types.StringValue(authSettings.Mappings.LastName)
-	plan.Mappings.GroupName = types.StringValue(authSettings.Mappings.GroupName)
-
-	if plan.AdvancedSettings == nil {
-		plan.AdvancedSettings = &models.AdvancedSettingsModel{}
-	}
-	plan.AdvancedSettings.RelayState = types.StringValue(authSettings.AdvancedSettings.RelayState)
-	plan.AdvancedSettings.IdpSingleLogoutURL = types.StringValue(authSettings.AdvancedSettings.IDPSingleLogoutURL)
-	plan.AdvancedSettings.ServiceProviderPublicCert = types.StringValue(authSettings.AdvancedSettings.ServiceProviderPublicCert)
-	plan.AdvancedSettings.ServiceProviderPrivateKey = types.StringValue(authSettings.AdvancedSettings.ServiceProviderPrivateKey)
-	plan.AdvancedSettings.AuthnContextEnabled = types.BoolValue(authSettings.AdvancedSettings.AuthnContextEnabled)
-	plan.AdvancedSettings.ForceAuthn = types.BoolValue(authSettings.AdvancedSettings.ForceAuthn)
+	r.refreshModelFromAPI(authSettings, &plan)
 
 	// Set state to fully populated data
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
@@ -356,7 +367,7 @@ func (r *AuthenticationSettingsResource) Read(ctx context.Context, req resource.
 	}
 
 	// Retrieve resource from API
-	allAuthSettings, err := r.client.ListAuthSettings(ctx)
+	authSettings, err := r.findAuthSettings(ctx, state.Name.ValueString(), state.Domain.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Authentication Settings",
@@ -365,55 +376,17 @@ func (r *AuthenticationSettingsResource) Read(ctx context.Context, req resource.
 		return
 	}
 
-	var authSettings *platform.AuthSettings
-	for i, as := range allAuthSettings.Reply {
-		if as.Name == state.Name.ValueString() && as.Domain == state.Domain.ValueString() {
-			authSettings = &allAuthSettings.Reply[i]
-			break
-		}
-	}
-
 	if authSettings == nil {
 		resp.Diagnostics.AddWarning(
 			"Authentication Settings not found",
-			fmt.Sprintf("No authentication settings found with name \"%s\" and domain \"%s\", removing from state.", state.Name.ValueString(), state.Domain.ValueString()),
+			fmt.Sprintf(`No authentication settings found with name "%s" and domain "%s", removing from state.`, state.Name.ValueString(), state.Domain.ValueString()),
 		)
 		resp.State.RemoveResource(ctx)
 		return
 	}
 
 	// Refresh state values
-	state.Name = types.StringValue(authSettings.Name)
-	state.DefaultRole = types.StringValue(authSettings.DefaultRole)
-	state.IsAccountRole = types.BoolValue(authSettings.IsAccountRole)
-	state.Domain = types.StringValue(authSettings.Domain)
-	state.TenantID = types.StringValue(authSettings.TenantID)
-	state.IdpEnabled = types.BoolValue(authSettings.IDPEnabled)
-	state.IdpSsoUrl = types.StringValue(authSettings.IDPSingleSignOnURL)
-	state.IdpCertificate = types.StringValue(authSettings.IDPCertificate)
-	state.IdpIssuer = types.StringValue(authSettings.IDPIssuer)
-	state.MetadataURL = types.StringValue(authSettings.MetadataURL)
-	state.SpEntityID = types.StringValue(authSettings.SpEntityID)
-	state.SpLogoutURL = types.StringValue(authSettings.SpLogoutURL)
-	state.SpURL = types.StringValue(authSettings.SpURL)
-
-	if state.Mappings == nil {
-		state.Mappings = &models.MappingsModel{}
-	}
-	state.Mappings.Email = types.StringValue(authSettings.Mappings.Email)
-	state.Mappings.FirstName = types.StringValue(authSettings.Mappings.FirstName)
-	state.Mappings.LastName = types.StringValue(authSettings.Mappings.LastName)
-	state.Mappings.GroupName = types.StringValue(authSettings.Mappings.GroupName)
-
-	if state.AdvancedSettings == nil {
-		state.AdvancedSettings = &models.AdvancedSettingsModel{}
-	}
-	state.AdvancedSettings.RelayState = types.StringValue(authSettings.AdvancedSettings.RelayState)
-	state.AdvancedSettings.IdpSingleLogoutURL = types.StringValue(authSettings.AdvancedSettings.IDPSingleLogoutURL)
-	state.AdvancedSettings.ServiceProviderPublicCert = types.StringValue(authSettings.AdvancedSettings.ServiceProviderPublicCert)
-	state.AdvancedSettings.ServiceProviderPrivateKey = types.StringValue(authSettings.AdvancedSettings.ServiceProviderPrivateKey)
-	state.AdvancedSettings.AuthnContextEnabled = types.BoolValue(authSettings.AdvancedSettings.AuthnContextEnabled)
-	state.AdvancedSettings.ForceAuthn = types.BoolValue(authSettings.AdvancedSettings.ForceAuthn)
+	r.refreshModelFromAPI(authSettings, &state)
 
 	// Set refreshed state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -479,11 +452,25 @@ func (r *AuthenticationSettingsResource) Update(ctx context.Context, req resourc
 		return
 	}
 
-	// Carry over computed values
-	plan.SpEntityID = state.SpEntityID
-	plan.SpLogoutURL = state.SpLogoutURL
-	plan.SpURL = state.SpURL
-	plan.TenantID = state.TenantID
+	authSettings, err := r.findAuthSettings(ctx, plan.Name.ValueString(), plan.Domain.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Updating Authentication Settings",
+			fmt.Sprintf("Error reading authentication settings after update: %s", err.Error()),
+		)
+		return
+	}
+
+	if authSettings == nil {
+		resp.Diagnostics.AddError(
+			"Error Updating Authentication Settings",
+			"Could not find the authentication settings after update.",
+		)
+		return
+	}
+
+	// Populate values from the read response
+	r.refreshModelFromAPI(authSettings, &plan)
 
 	// Set refreshed state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
