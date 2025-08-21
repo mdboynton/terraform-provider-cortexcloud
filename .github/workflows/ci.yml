@@ -17,23 +17,33 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Provider
         uses: actions/checkout@v4
+        with:
+          path: terraform-provider-cortexcloud
+
+      - name: Checkout SDK
+        uses: actions/checkout@v4
+        with:
+          repository: mdboynton/cortex-cloud-go
+          path: cortex-cloud-go
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.24.3'
           cache: true
-          cache-dependency-path: './go.sum'
+          cache-dependency-path: terraform-provider-cortexcloud/go.sum
 
       - name: Tidy and Vendor Dependencies
+        working-directory: terraform-provider-cortexcloud
         run: |
           go mod tidy
           go mod vendor
 
-      - name: Run Go Linter (Provider and SDK only)
+      - name: Run Go Linter
         uses: golangci/golangci-lint-action@v6
+        working-directory: terraform-provider-cortexcloud
         env:
           GOFLAGS: -mod=vendor
         with:
@@ -78,17 +88,26 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint, copyright]
     steps:
-      - name: Checkout
+      - name: Checkout Provider
         uses: actions/checkout@v4
+        with:
+          path: terraform-provider-cortexcloud
+
+      - name: Checkout SDK
+        uses: actions/checkout@v4
+        with:
+          repository: mdboynton/cortex-cloud-go
+          path: cortex-cloud-go
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.24.3'
           cache: true
-          cache-dependency-path: './go.sum'
+          cache-dependency-path: terraform-provider-cortexcloud/go.sum
 
       - name: Run Unit Tests
+        working-directory: terraform-provider-cortexcloud
         run: go test -v -cover -race -mod=vendor $(go list ./... | grep -v /vendor/ | grep -v /acceptance/)
 
   acceptance-tests:
@@ -97,15 +116,23 @@ jobs:
     needs: [unit-tests]
     environment: susanpolgar
     steps:
-      - name: Checkout
+      - name: Checkout Provider
         uses: actions/checkout@v4
+        with:
+          path: terraform-provider-cortexcloud
+
+      - name: Checkout SDK
+        uses: actions/checkout@v4
+        with:
+          repository: mdboynton/cortex-cloud-go
+          path: cortex-cloud-go
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.24.3'
           cache: true
-          cache-dependency-path: './go.sum'
+          cache-dependency-path: terraform-provider-cortexcloud/go.sum
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
@@ -113,6 +140,7 @@ jobs:
           terraform_version: '1.12.1'
 
       - name: Run Acceptance Tests
+        working-directory: terraform-provider-cortexcloud
         env:
           TF_ACC: 1
           CORTEX_API_URL: ${{ vars.CORTEX_API_URL }}
