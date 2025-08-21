@@ -5,10 +5,9 @@ on:
       - dev
       - main
   # Uncomment for testing 
-  push:
-    branches:
-      #- my-branch-name
-      - auth-settings
+  #push:
+  #  branches:
+  #    - my-branch-name
 
 jobs:
   run-acc-test-suite:
