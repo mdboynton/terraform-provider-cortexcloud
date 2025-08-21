@@ -33,7 +33,7 @@ jobs:
           GOFLAGS: -mod=vendor
         with:
           version: v1.59
-          args: --timeout=5m . ./internal/... ./vendor/github.com/mdboynton/cortex-cloud-go/...
+          args: --timeout=5m ./...
 
   copyright:
     name: Copyright
