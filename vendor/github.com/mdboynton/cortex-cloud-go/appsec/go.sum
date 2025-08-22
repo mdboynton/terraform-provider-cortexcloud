@@ -1,0 +1,4 @@
+dario.cat/mergo v1.0.2 h1:85+piFYR1tMbRrLcDwR18y4UKJ3aH1Tbzi24VRW1TK8=
+dario.cat/mergo v1.0.2/go.mod h1:E/hbnu0NxMFBjpMIE34DRGLWqDy0g5FuKDhCb31ngxA=
+github.com/mdboynton/cortex-cloud-go v0.0.0-20250530204549-8c630f4f6da1 h1:VJeIWtHT07FUL46Kx0EUPFoy44mZp5qvQ4cz+ukb2WE=
+github.com/mdboynton/cortex-cloud-go v0.0.0-20250530204549-8c630f4f6da1/go.mod h1:bWXhZZpsuuXD64TpC9ovVWk+pilDfzCYLM5AqhpdILQ=

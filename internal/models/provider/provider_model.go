@@ -1,9 +1,13 @@
+// Copyright (c) Palo Alto Networks, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package models
 
 import (
 	sdk "github.com/mdboynton/cortex-cloud-go/api"
 	"github.com/mdboynton/cortex-cloud-go/appsec"
 	"github.com/mdboynton/cortex-cloud-go/cloudonboarding"
+	"github.com/mdboynton/cortex-cloud-go/platform"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -25,4 +29,5 @@ type CortexCloudSDKClients struct {
 	Config          sdk.Config
 	AppSec          *appsec.Client
 	CloudOnboarding *cloudonboarding.Client
+	Platform        *platform.Client
 }

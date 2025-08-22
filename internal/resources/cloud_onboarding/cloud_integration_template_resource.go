@@ -4,13 +4,14 @@
 package cloud_onboarding
 
 import (
+	"fmt"
 	"context"
 
 	"github.com/mdboynton/cortex-cloud-go/cloudonboarding"
 	"github.com/mdboynton/cortex-cloud-go/enums"
 
-	providerModels "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/provider"
 	models "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/cloud_onboarding"
+	providerModels "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/provider"
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/util"
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/validators"
 
@@ -639,5 +640,12 @@ func (r *CloudIntegrationTemplateResource) Delete(ctx context.Context, req resou
 	}
 
 	// Delete template
-	r.client.DeleteInstances(ctx, []string{state.TrackingGuid.ValueString()})
+	err := r.client.DeleteInstances(ctx, []string{state.TrackingGuid.ValueString()})
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Cloud Integration Template Update Error", // TODO: standardize this
+			fmt.Sprintf("error occured while attempting to delete cloud integration template: %s", err.Error()),
+		)
+		return
+	}
 }

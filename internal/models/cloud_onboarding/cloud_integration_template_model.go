@@ -141,7 +141,7 @@ func (m *CloudIntegrationTemplateModel) RefreshComputedPropertyValues(diagnostic
 	data := response.Reply
 
 	var (
-		cloudFormationTemplateUrl string = ""
+		cloudFormationTemplateUrl = ""
 		err                       error
 	)
 	if m.CloudProvider.ValueString() == "AWS" {

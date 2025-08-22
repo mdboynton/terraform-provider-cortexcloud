@@ -46,7 +46,7 @@ func GetEnvironmentVariable(name string, reciever any) error {
 		*v = boolValue
 		return nil
 	default:
-		return fmt.Errorf("Failed to parse %s value from environment variable: unsupported type", reflect.TypeOf(v).String())
+		return fmt.Errorf("failed to parse %s value from environment variable: unsupported type", reflect.TypeOf(v).String())
 	}
 }
 

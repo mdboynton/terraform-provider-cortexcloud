@@ -1,4 +1,9 @@
 !/.gitignore
 
+# local testing
+test/
+test_env
+
 # Hidden files/directories
 .*
+!/.github

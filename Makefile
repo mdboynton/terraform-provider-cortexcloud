@@ -41,7 +41,7 @@ endif
 .PHONY: build
 build: checkos
 	@echo "Building provider ${CC_PROVIDER_BINARY}"
-	@go build -o ${CC_PROVIDER_BINARY}
+	@go build -mod=readonly -o ${CC_PROVIDER_BINARY}
 
 # Create plugin directory and move binary
 .PHONY: install
@@ -69,6 +69,34 @@ docs:
 	@tfplugindocs generate --rendered-provider-name "Cortex Cloud Provider"
 	@echo "Done!"
 
-# Run acceptance test suite
-acctest: build
-	go test -v ./internal/acceptance/ -count=1
+# Run all tests
+.PHONY: test
+test: test-unit test-acc
+
+# Run unit tests
+.PHONY: test-unit
+test-unit:
+	@echo "Running unit tests..."
+	@go test -v -cover -race -mod=vendor $$(go list ./... | grep -v /vendor/ | grep -v /acceptance/)
+
+# Run acceptance tests
+.PHONY: test-acc
+test-acc: build
+	@echo "Running acceptance tests..."
+	@go test -v -cover -race -mod=vendor $$(go list ./... | grep /acceptance/)
+
+# Run linter
+.PHONY: lint
+lint:
+	@echo "Running linter..."
+	@go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.1 run . ./internal/... ./vendor/github.com/mdboynton/cortex-cloud-go/...
+
+# Check for missing copyright headers
+.PHONY: copyright-check
+copyright-check:
+	@echo "Checking for missing file headers..."
+	@copywrite headers --config .copywrite.hcl --plan
+
+# Run all CI checks
+.PHONY: ci
+ci: lint copyright-check test-unit

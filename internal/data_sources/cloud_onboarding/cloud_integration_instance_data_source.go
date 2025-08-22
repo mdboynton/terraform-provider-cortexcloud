@@ -1,3 +1,6 @@
+// Copyright (c) Palo Alto Networks, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package cloudonboarding
 
 import (
@@ -6,8 +9,8 @@ import (
 	"github.com/mdboynton/cortex-cloud-go/cloudonboarding"
 	"github.com/mdboynton/cortex-cloud-go/enums"
 
-	providerModels "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/provider"
 	models "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/cloud_onboarding"
+	providerModels "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/provider"
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/util"
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/validators"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -208,7 +211,7 @@ func (r *CloudIntegrationInstanceDataSource) Schema(ctx context.Context, req dat
 						Computed:    true,
 						Validators: []validator.String{
 							stringvalidator.OneOf(
-								enums.AllScanModes()...
+								enums.AllScanModes()...,
 							),
 						},
 					},

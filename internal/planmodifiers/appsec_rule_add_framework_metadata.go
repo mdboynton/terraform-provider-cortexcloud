@@ -19,7 +19,7 @@ import (
 	//"github.com/hashicorp/terraform-plugin-framework/path"
 )
 
-type addFrameworkDefinitionMetadata struct {}
+type addFrameworkDefinitionMetadata struct{}
 
 func AddFrameworkDefinitionMetadata() planmodifier.String {
 	return &addFrameworkDefinitionMetadata{}
@@ -74,10 +74,10 @@ func (m *addFrameworkDefinitionMetadata) PlanModifyString(ctx context.Context, r
 	// Define the 'metadata' block that the API populates.
 	// These values are hardcoded to match your example's 'config value'.
 	injectedMetadataMap := map[string]string{
-		"name": plan.Name.ValueString(),
+		"name":       plan.Name.ValueString(),
 		"guidelines": "...",
-		"category": strings.ToLower(plan.Category.ValueString()),
-		"severity": strings.ToLower(plan.Severity.ValueString()),
+		"category":   strings.ToLower(plan.Category.ValueString()),
+		"severity":   strings.ToLower(plan.Severity.ValueString()),
 	}
 
 	// Create a new yaml.Node for the 'metadata' key and its value.
@@ -179,21 +179,6 @@ func (m *addFrameworkDefinitionMetadata) PlanModifyString(ctx context.Context, r
 	//}
 
 	//resp.PlanValue = types.StringValue(string(modifiedYAMLBytes))
-
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 	//var definition customTypes.YamlString
 	//resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, req.Path, &definition)...)
