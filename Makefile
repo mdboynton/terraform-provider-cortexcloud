@@ -41,7 +41,7 @@ endif
 .PHONY: build
 build: checkos
 	@echo "Building provider ${CC_PROVIDER_BINARY}"
-	@go build -o ${CC_PROVIDER_BINARY}
+	@go build -mod=readonly -o ${CC_PROVIDER_BINARY}
 
 # Create plugin directory and move binary
 .PHONY: install
