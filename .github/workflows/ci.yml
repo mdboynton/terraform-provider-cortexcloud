@@ -40,7 +40,7 @@ jobs:
         working-directory: terraform-provider-cortexcloud
         run: |
           go mod tidy
-          go mod vendor
+          go mod -e vendor
 
       - name: Run Go Linter
         uses: golangci/golangci-lint-action@v6
