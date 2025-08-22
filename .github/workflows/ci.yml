@@ -39,7 +39,7 @@ jobs:
       - name: Tidy and Vendor Dependencies
         working-directory: terraform-provider-cortexcloud
         run: |
-          go mod tidy
+          go mod tidy -e
           go mod vendor -e
 
       - name: Run Go Linter
