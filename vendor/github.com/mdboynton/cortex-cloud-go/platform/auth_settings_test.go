@@ -53,10 +53,10 @@ func TestClient_GetIDPMetadata(t *testing.T) {
 
 		resp, err := client.GetIDPMetadata(context.Background())
 		assert.NoError(t, err)
-		assert.Equal(t, "my-tenant", resp.Data.TenantID)
-		assert.Equal(t, "sp-entity-id", resp.Data.SpEntityID)
-		assert.Equal(t, "https://logout.url", resp.Data.SpLogoutURL)
-		assert.Equal(t, "https://sp.url", resp.Data.SpURL)
+		assert.Equal(t, "my-tenant", resp.TenantID)
+		assert.Equal(t, "sp-entity-id", resp.SpEntityID)
+		assert.Equal(t, "https://logout.url", resp.SpLogoutURL)
+		assert.Equal(t, "https://sp.url", resp.SpURL)
 	})
 }
 

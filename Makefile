@@ -3,7 +3,8 @@ CC_PROVIDER_HOSTNAME = registry.terraform.io
 CC_PROVIDER_NAMESPACE = PaloAltoNetworks
 CC_PROVIDER_NAME = cortexcloud
 CC_PROVIDER_BINARY = terraform-provider-${CC_PROVIDER_NAME}
-CC_PROVIDER_VERSION ?= 0.0.0-dev
+#CC_PROVIDER_VERSION ?= 0.0.0-dev
+CC_PROVIDER_VERSION ?= 0.0.0
 
 # OS and architecture of the system that will run the provider
 # Must follow the schema "os_architecture"
@@ -42,6 +43,12 @@ endif
 build: checkos
 	@echo "Building provider ${CC_PROVIDER_BINARY}"
 	@go build -mod=readonly -o ${CC_PROVIDER_BINARY}
+
+# Build provider binary (skip checkos)
+.PHONY: build-only
+build-only:
+	@go build -mod=readonly -o ${CC_PROVIDER_BINARY}
+	@echo $?
 
 # Create plugin directory and move binary
 .PHONY: install
@@ -89,7 +96,7 @@ test-acc: build
 .PHONY: lint
 lint:
 	@echo "Running linter..."
-	@go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.1 run . ./internal/... ./vendor/github.com/mdboynton/cortex-cloud-go/...
+	@go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.1 run . ./internal/... ./vendor/github.com/PaloAltoNetworks/cortex-cloud-go/...
 
 # Check for missing copyright headers
 .PHONY: copyright-check

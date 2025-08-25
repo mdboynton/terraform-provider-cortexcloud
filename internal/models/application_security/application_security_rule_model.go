@@ -5,8 +5,8 @@ package models
 
 import (
 	"context"
-	"slices"
-	"strings"
+	//"slices"
+	//"strings"
 
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/util"
 	"github.com/mdboynton/cortex-cloud-go/appsec"
@@ -167,31 +167,33 @@ func (m *ApplicationSecurityRuleModel) ToUpdateRequest(ctx context.Context, diag
 func (m *ApplicationSecurityRuleModel) RefreshPropertyValues(ctx context.Context, diagnostics *diag.Diagnostics, response appsec.Rule) {
 	// TODO: create member functions for conversion to schema
 
-	var frameworkValues []FrameworkModel
-	for _, framework := range response.Frameworks {
-		// If the TERRAFORM framework exists in the resource configuration and
-		// the TERRAFORMPLAN framework does not exist in the current resource
-		// state, do not include the TERRAFORMPLAN framework in the updated
-		// Frameworks value, otherwise Terraform will error on recieving an
-		// unexpected new value
-		if framework.Name == "TERRAFORMPLAN" && slices.ContainsFunc(m.Frameworks, func(f FrameworkModel) bool { return strings.ToUpper(f.Name.ValueString()) == "TERRAFORM" }) {
-			continue
-		}
+	//var frameworkValues []FrameworkModel
+	////for _, framework := range response.Frameworks {
+	//for idx, framework := range response.Frameworks {
+	//	// If the TERRAFORM framework exists in the resource configuration and
+	//	// the TERRAFORMPLAN framework does not exist in the current resource
+	//	// state, do not include the TERRAFORMPLAN framework in the updated
+	//	// Frameworks value, otherwise Terraform will error on recieving an
+	//	// unexpected new value
+	//	if framework.Name == "TERRAFORMPLAN" && slices.ContainsFunc(m.Frameworks, func(f FrameworkModel) bool { return strings.ToUpper(f.Name.ValueString()) == "TERRAFORM" }) {
+	//		continue
+	//	}
 
-		//var remediationDescription string
-		//if framework.RemediationDescription == nil {
-		//	remediationDescription = ""
-		//} else {
-		//	remediationDescription = *framework.RemediationDescription
-		//}
+	//	//var remediationDescription string
+	//	//if framework.RemediationDescription == nil {
+	//	//	remediationDescription = ""
+	//	//} else {
+	//	//	remediationDescription = *framework.RemediationDescription
+	//	//}
 
-		frameworkValues = append(frameworkValues, FrameworkModel{
-			Name:                   types.StringValue(framework.Name),
-			Definition:             types.StringValue(framework.Definition),
-			RemediationDescription: types.StringValue(framework.RemediationDescription),
-			DefinitionLink:         types.StringValue(framework.DefinitionLink),
-		})
-	}
+	//	frameworkValues = append(frameworkValues, FrameworkModel{
+	//		Name:                   types.StringValue(framework.Name),
+	//		//Definition:             types.StringValue(framework.Definition),
+	//		Definition:             m.Frameworks[idx].Definition,
+	//		RemediationDescription: types.StringValue(framework.RemediationDescription),
+	//		DefinitionLink:         types.StringValue(framework.DefinitionLink),
+	//	})
+	//}
 
 	var conversionDiags diag.Diagnostics
 	labels, diags := types.SetValueFrom(ctx, types.StringType, response.Labels)
@@ -220,7 +222,7 @@ func (m *ApplicationSecurityRuleModel) RefreshPropertyValues(ctx context.Context
 	m.FindingDocs = types.StringValue(response.FindingDocs)
 	m.FindingTypeId = types.Int32Value(int32(response.FindingTypeId))
 	m.FindingTypeName = types.StringValue(response.FindingTypeName)
-	m.Frameworks = frameworkValues
+	//m.Frameworks = frameworkValues
 	m.Id = types.StringValue(response.Id)
 	m.IsCustom = types.BoolValue(response.IsCustom)
 	m.IsEnabled = types.BoolValue(response.IsEnabled)
