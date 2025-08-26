@@ -15,6 +15,9 @@ project {
     # examples used within documentation (prose)
     "examples/**",
 
+    # shell scripts
+    "*.sh",
+
     # GitHub issue template configuration
     ".github/ISSUE_TEMPLATE/*.yml",
 
