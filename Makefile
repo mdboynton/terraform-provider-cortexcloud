@@ -10,7 +10,13 @@ CC_PROVIDER_VERSION ?= 0.0.0
 # Must follow the schema "os_architecture"
 TARGET_OS_ARCH ?= darwin_arm64
 
+plugin_directory_no_arch="${HOME}/.terraform.d/plugins/${CC_PROVIDER_HOSTNAME}/${CC_PROVIDER_NAMESPACE}/${CC_PROVIDER_NAME}/${CC_PROVIDER_VERSION}"
+plugin_directory="${plugin_directory_no_arch}/${TARGET_OS_ARCH}"
+
 IS_CI_EXECUTION=0
+
+VERSION_UUID=$(uuidgen)
+BUILD_FLAGS="-X main.version=${VERSION_UUID}"
 
 # Retrieve operating system name and architecture 
 os := $(shell uname -s | awk '{print tolower($0)}')
@@ -42,32 +48,31 @@ endif
 .PHONY: build
 build: checkos
 	@echo "Building provider ${CC_PROVIDER_BINARY}"
-	@go build -mod=readonly -o ${CC_PROVIDER_BINARY}
+	@go build -mod=readonly -ldflags=${BUILD_FLAGS} -o ${CC_PROVIDER_BINARY}
 
 # Build provider binary (skip checkos)
 .PHONY: build-only
 build-only:
-	@go build -mod=readonly -o ${CC_PROVIDER_BINARY}
+	@go build -mod=readonly -ldflags="${BUILD_FLAGS}" -o ${CC_PROVIDER_BINARY}
 	@echo $?
 
 # Create plugin directory and move binary
 .PHONY: install
 install: build
-	@echo "Creating plugin directory ~/.terraform.d/plugins/${CC_PROVIDER_HOSTNAME}/${CC_PROVIDER_NAMESPACE}/${CC_PROVIDER_NAME}/${CC_PROVIDER_VERSION}/${TARGET_OS_ARCH}"
-	@mkdir -p ~/.terraform.d/plugins/${CC_PROVIDER_HOSTNAME}/${CC_PROVIDER_NAMESPACE}/${CC_PROVIDER_NAME}/${CC_PROVIDER_VERSION}/${TARGET_OS_ARCH}
+	@echo "Creating plugin directory ${plugin_directory}"
+	@mkdir -p ${plugin_directory}
 	@echo "Moving binary to plugin directory..."
-	@mv ${CC_PROVIDER_BINARY} ~/.terraform.d/plugins/${CC_PROVIDER_HOSTNAME}/${CC_PROVIDER_NAMESPACE}/${CC_PROVIDER_NAME}/${CC_PROVIDER_VERSION}/${TARGET_OS_ARCH}
+	@mv ${CC_PROVIDER_BINARY} ${plugin_directory}
 	@echo "Done!"
 
 # Delete provider binary from plugin directory
 .PHONY: clean
 clean:
-	@echo "Deleting directory ~/.terraform.d/plugins/${CC_PROVIDER_HOSTNAME}/${CC_PROVIDER_NAMESPACE}/${CC_PROVIDER_NAME}"
-	rm -rf ~/.terraform.d/plugins/${CC_PROVIDER_HOSTNAME}/${CC_PROVIDER_NAMESPACE}/${CC_PROVIDER_NAME}
+	@echo "Deleting directory ${plugin_directory_no_arch}"
+	@rm -rf ${plugin_directory_no_arch}
 	@echo "Done!"
 
 # Generate provider documentation
-# TODO: add this to `build` step execution (maybe with flag for production build?)
 .PHONY: docs
 docs:
 	@echo "Adding any missing file headers..."

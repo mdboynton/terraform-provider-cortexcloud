@@ -14,10 +14,12 @@ import (
 )
 
 var (
-	version string = "dev"
+	version string = "unknown"
 )
 
 func main() {
+	log.Printf("version: %s\n", version)	
+
 	var debug bool
 
 	flag.BoolVar(&debug, "debug", false, "set to true to run the provider with support for debuggers (e.g. delve)")
