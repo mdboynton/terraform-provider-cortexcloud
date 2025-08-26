@@ -5,19 +5,22 @@ package models
 
 import (
 	"context"
-	//"slices"
-	//"strings"
+	"slices"
+	"strings"
+	"regexp"
 
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/util"
 	"github.com/mdboynton/cortex-cloud-go/appsec"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	//"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 // *********************************************************
 // Structs
 // *********************************************************
+
 type ApplicationSecurityRuleModel struct {
 	Category        types.String     `tfsdk:"category"`
 	CloudProvider   types.String     `tfsdk:"cloud_provider"`
@@ -48,44 +51,11 @@ type ApplicationSecurityRuleModel struct {
 
 type FrameworkModel struct {
 	Name types.String `tfsdk:"name"`
-	//Definition             FrameworkDefinitionModel
 	Definition             types.String `tfsdk:"definition"`
 	DefinitionLink         types.String `tfsdk:"definition_link"`
 	RemediationDescription types.String `tfsdk:"remediation_description"`
 }
 
-type FrameworkDefinitionModel struct {
-	Metadata *FrameworkDefinitionMetadataModel `tfsdk:"metadata" yaml:"metadata,omitempty"`
-	Scope    FrameworkDefinitionScopeModel     `tfsdk:"scope" yaml:"scope,omitempty"`
-	//Definition FrameworkDefinitionLogicModel     `tfsdk:"definition" yaml:"definition,omitempty"`
-	Definition types.Dynamic `tfsdk:"definition" yaml:"definition,omitempty"`
-}
-
-type FrameworkDefinitionMetadataModel struct {
-	Name       types.String `tfsdk:"name" yaml:"name"`
-	Guidelines types.String `tfsdk:"guidelines" yaml:"guidelines"`
-	Category   types.String `tfsdk:"category" yaml:"category"`
-	Severity   types.String `tfsdk:"severity" yaml:"severity"`
-}
-
-type FrameworkDefinitionScopeModel struct {
-	Provider types.String `tfsdk:"provider" yaml:"provider,omitempty"`
-}
-
-type FrameworkDefinitionLogicModel struct {
-	And []FrameworkDefinitionLogicConditionModel `tfsdk:"and" yaml:"and,omitempty"`
-	Or  []FrameworkDefinitionLogicConditionModel `tfsdk:"or" yaml:"or,omitempty"`
-}
-
-type FrameworkDefinitionLogicConditionModel struct {
-	ConditionType types.String                             `tfsdk:"condition_type" yaml:"cond_type,omitempty"`
-	ResourceTypes types.List                               `tfsdk:"resource_types" yaml:"resource_types,omitempty"`
-	Attribute     types.String                             `tfsdk:"attribute" yaml:"attribute,omitempty"`
-	Operator      types.String                             `tfsdk:"operator" yaml:"operator,omitempty"`
-	Value         types.String                             `tfsdk:"value" yaml:"value,omitempty"`
-	And           []FrameworkDefinitionLogicConditionModel `tfsdk:"and" yaml:"and,omitempty"`
-	Or            []FrameworkDefinitionLogicConditionModel `tfsdk:"or" yaml:"or,omitempty"`
-}
 
 // *********************************************************
 // Request conversion functions
@@ -164,53 +134,48 @@ func (m *ApplicationSecurityRuleModel) ToUpdateRequest(ctx context.Context, diag
 // *********************************************************
 // Helper functions
 // *********************************************************
+
+var frameworkMetadataRegex = regexp.MustCompile(`(?m)^\s*metadata:\s*\n(?:^\s+.*\n){4}`)
+
 func (m *ApplicationSecurityRuleModel) RefreshPropertyValues(ctx context.Context, diagnostics *diag.Diagnostics, response appsec.Rule) {
 	// TODO: create member functions for conversion to schema
 
-	//var frameworkValues []FrameworkModel
-	////for _, framework := range response.Frameworks {
-	//for idx, framework := range response.Frameworks {
-	//	// If the TERRAFORM framework exists in the resource configuration and
-	//	// the TERRAFORMPLAN framework does not exist in the current resource
-	//	// state, do not include the TERRAFORMPLAN framework in the updated
-	//	// Frameworks value, otherwise Terraform will error on recieving an
-	//	// unexpected new value
-	//	if framework.Name == "TERRAFORMPLAN" && slices.ContainsFunc(m.Frameworks, func(f FrameworkModel) bool { return strings.ToUpper(f.Name.ValueString()) == "TERRAFORM" }) {
-	//		continue
-	//	}
+	var frameworkValues []FrameworkModel
+	for _, framework := range response.Frameworks {
+		// If the TERRAFORM framework exists in the resource configuration and
+		// the TERRAFORMPLAN framework does not exist in the current resource
+		// state, do not include the TERRAFORMPLAN framework in the updated
+		// Frameworks value, otherwise Terraform will error on recieving an
+		// unexpected new value
+		if framework.Name == "TERRAFORMPLAN" && slices.ContainsFunc(m.Frameworks, func(f FrameworkModel) bool { return strings.ToUpper(f.Name.ValueString()) == "TERRAFORM" }) {
+			continue
+		}
 
-	//	//var remediationDescription string
-	//	//if framework.RemediationDescription == nil {
-	//	//	remediationDescription = ""
-	//	//} else {
-	//	//	remediationDescription = *framework.RemediationDescription
-	//	//}
+		// Remove `metadata` block from framework definition to prevent
+		// Terraform erroring on inconsistant post-apply results
+		cleanedDefinition := frameworkMetadataRegex.ReplaceAllString(framework.Definition, "")
 
-	//	frameworkValues = append(frameworkValues, FrameworkModel{
-	//		Name:                   types.StringValue(framework.Name),
-	//		//Definition:             types.StringValue(framework.Definition),
-	//		Definition:             m.Frameworks[idx].Definition,
-	//		RemediationDescription: types.StringValue(framework.RemediationDescription),
-	//		DefinitionLink:         types.StringValue(framework.DefinitionLink),
-	//	})
-	//}
+		frameworkValues = append(frameworkValues, FrameworkModel{
+			Name:                   types.StringValue(framework.Name),
+			Definition:             types.StringValue(cleanedDefinition),
+			RemediationDescription: types.StringValue(framework.RemediationDescription),
+			DefinitionLink:         types.StringValue(framework.DefinitionLink),
+		})
+	}
 
-	var conversionDiags diag.Diagnostics
 	labels, diags := types.SetValueFrom(ctx, types.StringType, response.Labels)
-	conversionDiags.Append(diags...)
+	diagnostics.Append(diags...)
 
 	mitreTactics, diags := types.SetValueFrom(ctx, types.StringType, response.MitreTactics)
-	conversionDiags.Append(diags...)
+	diagnostics.Append(diags...)
 
 	mitreTechniques, diags := types.SetValueFrom(ctx, types.StringType, response.MitreTechniques)
-	conversionDiags.Append(diags...)
-
-	diagnostics.Append(conversionDiags...)
+	diagnostics.Append(diags...)
 
 	if diagnostics.HasError() {
 		return
 	}
-
+	
 	m.Category = types.StringValue(response.Category)
 	m.CloudProvider = types.StringValue(response.CloudProvider)
 	m.CreatedAt = types.StringValue(response.CreatedAt.Value)
@@ -222,7 +187,7 @@ func (m *ApplicationSecurityRuleModel) RefreshPropertyValues(ctx context.Context
 	m.FindingDocs = types.StringValue(response.FindingDocs)
 	m.FindingTypeId = types.Int32Value(int32(response.FindingTypeId))
 	m.FindingTypeName = types.StringValue(response.FindingTypeName)
-	//m.Frameworks = frameworkValues
+	m.Frameworks = frameworkValues
 	m.Id = types.StringValue(response.Id)
 	m.IsCustom = types.BoolValue(response.IsCustom)
 	m.IsEnabled = types.BoolValue(response.IsEnabled)

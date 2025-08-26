@@ -9,7 +9,6 @@ import (
 
 	models "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/application_security"
 	providerModels "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/provider"
-	//"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/planmodifiers"
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/util"
 
 	"github.com/mdboynton/cortex-cloud-go/appsec"
@@ -45,12 +44,12 @@ type ApplicationSecurityRuleResource struct {
 }
 
 // Metadata returns the resource type name.
-func (r *ApplicationSecurityRuleResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *ApplicationSecurityRuleResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_application_security_rule"
 }
 
 // Schema defines the schema for the resource.
-func (r *ApplicationSecurityRuleResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *ApplicationSecurityRuleResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "TODO",
 		Attributes: map[string]schema.Attribute{
@@ -58,7 +57,6 @@ func (r *ApplicationSecurityRuleResource) Schema(ctx context.Context, req resour
 				// TODO: validation
 				Description: "TODO",
 				Required:    true,
-				//Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -154,9 +152,6 @@ func (r *ApplicationSecurityRuleResource) Schema(ctx context.Context, req resour
 							Description: "TODO",
 							Optional:    true,
 							Computed:    true,
-							//PlanModifiers: []planmodifier.String{
-							//	planmodifiers.AddFrameworkDefinitionMetadata(),
-							//},
 						},
 						"definition_link": schema.StringAttribute{
 							Description: "TODO",
@@ -175,9 +170,6 @@ func (r *ApplicationSecurityRuleResource) Schema(ctx context.Context, req resour
 						},
 					},
 				},
-				//PlanModifiers: []planmodifier.List{
-				//	setplanmodifier.UseStateForUnknown(),
-				//},
 			},
 			"id": schema.StringAttribute{
 				Description: "TODO",
@@ -252,7 +244,6 @@ func (r *ApplicationSecurityRuleResource) Schema(ctx context.Context, req resour
 				// TODO: validation
 				Description: "TODO",
 				Required:    true,
-				//Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -268,7 +259,6 @@ func (r *ApplicationSecurityRuleResource) Schema(ctx context.Context, req resour
 			},
 			"sub_category": schema.StringAttribute{
 				// TODO: validation
-				// The valid inputs for this attribute are determined by the "category" value
 				Description: "TODO",
 				Optional:    true,
 				Computed:    true,
@@ -279,16 +269,13 @@ func (r *ApplicationSecurityRuleResource) Schema(ctx context.Context, req resour
 			"updated_at": schema.StringAttribute{
 				Description: "TODO",
 				Computed:    true,
-				//PlanModifiers: []planmodifier.String{
-				//	stringplanmodifier.UseStateForUnknown(),
-				//},
 			},
 		},
 	}
 }
 
 // Configure adds the provider-configured client to the resource.
-func (r *ApplicationSecurityRuleResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *ApplicationSecurityRuleResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -480,7 +467,7 @@ func (r *ApplicationSecurityRuleResource) Update(ctx context.Context, req resour
 	if err := mergo.MergeWithOverwrite(&state, plan); err != nil {
 		resp.Diagnostics.AddError(
 			"Error Updating Application Security Rule",
-			fmt.Sprintf("Error occured while merging existing application security rule with planned value: %s", err.Error()),
+			fmt.Sprintf("Error occurred while merging existing application security rule with planned value: %s", err.Error()),
 		)
 		return
 	}
