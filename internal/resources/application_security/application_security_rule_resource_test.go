@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/acceptance"

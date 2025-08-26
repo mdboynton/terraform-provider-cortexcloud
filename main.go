@@ -16,8 +16,8 @@ import (
 
 var (
 	buildVersion string = "unknown"
-	buildTime string = "unknown"
-	goVersion string = "unknown"
+	buildTime    string = "unknown"
+	goVersion    string = "unknown"
 )
 
 func logBuildInfo() {

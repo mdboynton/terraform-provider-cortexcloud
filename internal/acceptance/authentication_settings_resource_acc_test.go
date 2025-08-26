@@ -67,7 +67,7 @@ func TestAccAuthenticationSettingsResource(t *testing.T) {
 			},
 			// Update and Read testing
 			{
-				Config: resourceConfigUpdate, 
+				Config: resourceConfigUpdate,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", AccTestAuthSettings1NameUpdated),
 					resource.TestCheckResourceAttr(resourceName, "domain", AccTestAuthSettings1DomainUpdated),

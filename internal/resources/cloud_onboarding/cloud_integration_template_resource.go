@@ -4,8 +4,8 @@
 package cloud_onboarding
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 
 	"github.com/mdboynton/cortex-cloud-go/cloudonboarding"
 	"github.com/mdboynton/cortex-cloud-go/enums"

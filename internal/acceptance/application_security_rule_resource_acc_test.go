@@ -5,8 +5,8 @@ package acceptance
 
 import (
 	"fmt"
-	"testing"
 	"strconv"
+	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
