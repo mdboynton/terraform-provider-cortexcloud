@@ -97,7 +97,7 @@ test-unit:
 .PHONY: test-acc
 test-acc: build
 	@echo "Running acceptance tests..."
-	@go test -v -cover -race -mod=readonly $$(go list -mod=readonly ./... | grep /acceptance/)
+	@TF_ACC=1 go test -v -cover -race -mod=readonly $$(go list -mod=readonly ./... | grep /acceptance)
 #@go test -v -cover -race -mod=vendor $$(go list ./... | grep /acceptance/)
 
 # Run linter

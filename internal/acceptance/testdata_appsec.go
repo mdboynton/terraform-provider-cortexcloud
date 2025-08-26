@@ -11,6 +11,8 @@ import (
 )
 
 var (
+	// Unit Tests
+
 	AppSecRule1Name     = "test-rule"
 	AppSecRule1Description     = "test description"
 	AppSecRule1Category = enums.IacCategoryCompute.String()
@@ -124,6 +126,49 @@ resource "cortexcloud_application_security_rule" "test" {
 	}
 }`
 
+	// Acceptance Tests
+
+	AccTestAppSecRule1Name     = "tf-provider-acc-test-rule"
+	AccTestAppSecRule1Description     = "acc test description"
+	AccTestAppSecRule1Category = enums.IacCategoryCompute.String()
+	AccTestAppSecRule1SubCategory = enums.IacSubCategoryComputeOverprovisioned.String()
+	AccTestAppSecRule1Scanner  = enums.ScannerIAC.String()
+	AccTestAppSecRule1Severity = enums.SeverityInfo.String()
+	AccTestAppSecRule1Labels = []string{
+		"accTestLabel1", 
+		"accTestLabel2",
+	}
+	AccTestAppSecRule1Framework1Name   = enums.FrameworkNameTerraform.String()
+	AccTestAppSecRule1Framework1Definition = "scope:\n  provider: aws\ndefinition:\n  or:\n    - cond_type: attribute\n      resource_types:\n        - aws_instance\n      attribute: instance_type\n      operator: equals\n      value: t2.micro\n"
+	//AccTestAppSecRule1Framework1DefinitionLink = "http://docs.com/framework"
+	//AccTestAppSecRule1Framework1RemediationDescription = "fix it"
+	AccTestAppSecRule1Framework1DefinitionLink = ""
+	AccTestAppSecRule1Framework1RemediationDescription = ""
+	
+	AccTestAppSecRule1LabelsUpdated = []string{
+		"accTestLabel1", 
+		"accTestLabel2",
+		"accTestLabel3",
+	}
+	AccTestAppSecRule1DescriptionUpdated     = "updated acc test description"
+
+	AccTestAppSecRule1ConfigTmpl = `resource "cortexcloud_application_security_rule" "test" {
+  name         = %s
+  category     = %s
+  sub_category = %s
+  scanner      = %s
+  severity     = %s
+  description  = %s
+  labels       = %s
+  frameworks = [
+    {
+      name = %s
+      definition = %s
+      definition_link = %s
+      remediation_description = %s
+    }
+  ]
+}`
 )
 
 // AppSecRuleLabelsHCL returns the provided labels as a HCL string.
