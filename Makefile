@@ -3,13 +3,21 @@ CC_PROVIDER_HOSTNAME = registry.terraform.io
 CC_PROVIDER_NAMESPACE = PaloAltoNetworks
 CC_PROVIDER_NAME = cortexcloud
 CC_PROVIDER_BINARY = terraform-provider-${CC_PROVIDER_NAME}
-CC_PROVIDER_VERSION ?= 0.0.0-dev
+CC_PROVIDER_VERSION ?= 0.0.0
 
 # OS and architecture of the system that will run the provider
 # Must follow the schema "os_architecture"
 TARGET_OS_ARCH ?= darwin_arm64
 
+plugin_directory_no_arch="${HOME}/.terraform.d/plugins/${CC_PROVIDER_HOSTNAME}/${CC_PROVIDER_NAMESPACE}/${CC_PROVIDER_NAME}/${CC_PROVIDER_VERSION}"
+plugin_directory="${plugin_directory_no_arch}/${TARGET_OS_ARCH}"
+
 IS_CI_EXECUTION=0
+
+# Populate build flags
+BUILD_VERSION=$(git describe --tags --always)
+BUILD_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+BUILD_FLAGS="-X main.buildVersion=${BUILD_VERSION} -X main.buildTime=${BUILD_TIME}"
 
 # Retrieve operating system name and architecture 
 os := $(shell uname -s | awk '{print tolower($0)}')
@@ -41,26 +49,31 @@ endif
 .PHONY: build
 build: checkos
 	@echo "Building provider ${CC_PROVIDER_BINARY}"
-	@go build -mod=readonly -o ${CC_PROVIDER_BINARY}
+	@go build -mod=readonly -ldflags=${BUILD_FLAGS} -o ${CC_PROVIDER_BINARY}
+
+# Build provider binary (skip checkos)
+.PHONY: build-only
+build-only:
+	@go build -mod=readonly -ldflags="${BUILD_FLAGS}" -o ${CC_PROVIDER_BINARY}
+	@echo $?
 
 # Create plugin directory and move binary
 .PHONY: install
 install: build
-	@echo "Creating plugin directory ~/.terraform.d/plugins/${CC_PROVIDER_HOSTNAME}/${CC_PROVIDER_NAMESPACE}/${CC_PROVIDER_NAME}/${CC_PROVIDER_VERSION}/${TARGET_OS_ARCH}"
-	@mkdir -p ~/.terraform.d/plugins/${CC_PROVIDER_HOSTNAME}/${CC_PROVIDER_NAMESPACE}/${CC_PROVIDER_NAME}/${CC_PROVIDER_VERSION}/${TARGET_OS_ARCH}
+	@echo "Creating plugin directory ${plugin_directory}"
+	@mkdir -p ${plugin_directory}
 	@echo "Moving binary to plugin directory..."
-	@mv ${CC_PROVIDER_BINARY} ~/.terraform.d/plugins/${CC_PROVIDER_HOSTNAME}/${CC_PROVIDER_NAMESPACE}/${CC_PROVIDER_NAME}/${CC_PROVIDER_VERSION}/${TARGET_OS_ARCH}
+	@mv ${CC_PROVIDER_BINARY} ${plugin_directory}
 	@echo "Done!"
 
 # Delete provider binary from plugin directory
 .PHONY: clean
 clean:
-	@echo "Deleting directory ~/.terraform.d/plugins/${CC_PROVIDER_HOSTNAME}/${CC_PROVIDER_NAMESPACE}/${CC_PROVIDER_NAME}"
-	rm -rf ~/.terraform.d/plugins/${CC_PROVIDER_HOSTNAME}/${CC_PROVIDER_NAMESPACE}/${CC_PROVIDER_NAME}
+	@echo "Deleting directory ${plugin_directory_no_arch}"
+	@rm -rf ${plugin_directory_no_arch}
 	@echo "Done!"
 
 # Generate provider documentation
-# TODO: add this to `build` step execution (maybe with flag for production build?)
 .PHONY: docs
 docs:
 	@echo "Adding any missing file headers..."
@@ -77,19 +90,21 @@ test: test-unit test-acc
 .PHONY: test-unit
 test-unit:
 	@echo "Running unit tests..."
-	@go test -v -cover -race -mod=vendor $$(go list ./... | grep -v /vendor/ | grep -v /acceptance/)
+	@go test -v -cover -race -mod=readonly $$(go list -mod=readonly ./... | grep -v /vendor/ | grep -v /acceptance/)
+#@go test -v -cover -race -mod=vendor $$(go list ./... | grep -v /vendor/ | grep -v /acceptance/)
 
 # Run acceptance tests
 .PHONY: test-acc
 test-acc: build
 	@echo "Running acceptance tests..."
-	@go test -v -cover -race -mod=vendor $$(go list ./... | grep /acceptance/)
+	@TF_ACC=1 go test -v -cover -race -mod=readonly $$(go list -mod=readonly ./... | grep /acceptance)
+#@go test -v -cover -race -mod=vendor $$(go list ./... | grep /acceptance/)
 
 # Run linter
 .PHONY: lint
 lint:
 	@echo "Running linter..."
-	@go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.1 run . ./internal/... ./vendor/github.com/mdboynton/cortex-cloud-go/...
+	@go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.1 run . ./internal/... ./vendor/github.com/PaloAltoNetworks/cortex-cloud-go/...
 
 # Check for missing copyright headers
 .PHONY: copyright-check

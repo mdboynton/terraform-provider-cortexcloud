@@ -53,10 +53,6 @@ type GetIDPMetadataRequest struct {
 type GetIDPMetadataRequestData struct {}
 
 type GetIDPMetadataResponse struct {
-	Data GetIDPMetadataResponseData `json:"reply"`
-}
-
-type GetIDPMetadataResponseData struct {
 	TenantID string   `json:"tenant_id"`
 	SpEntityID string `json:"sp_entity_id"`
 	SpLogoutURL string `json:"sp_logout_url"`

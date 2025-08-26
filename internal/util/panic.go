@@ -33,7 +33,7 @@ func PanicHandler(diagnostics *diag.Diagnostics) {
 		file, err := os.CreateTemp("", "terraform_cortexcloud_crash_stack.*.txt")
 
 		if err == nil {
-			defer func () {
+			defer func() {
 				closeErr := file.Close()
 				if closeErr != nil {
 					diagnostics.AddError(

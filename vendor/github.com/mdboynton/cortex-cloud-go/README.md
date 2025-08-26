@@ -1,1 +1,0 @@
-# cortex-cloud-go

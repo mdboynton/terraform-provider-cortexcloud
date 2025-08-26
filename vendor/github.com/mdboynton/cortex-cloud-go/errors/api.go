@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mdboynton/cortex-cloud-go/internal/types"
+	"github.com/mdboynton/cortex-cloud-go/internal/util"
 )
 
 type CortexCloudAPIError struct {
@@ -55,7 +55,7 @@ type CortexCloudAPIErrorDetail struct {
 func (e CortexCloudAPIErrorExtra) locationAsStringSlice() []string {
 	result := []string{}
 	for _, elem := range e.Location {
-		stringElem, err := types.ConvertInterfaceToString(elem)
+		stringElem, err := util.ConvertInterfaceToString(elem)
 		if err != nil {
 			stringElem = "UNKNOWN_TYPE"
 		}
@@ -67,7 +67,7 @@ func (e CortexCloudAPIErrorExtra) locationAsStringSlice() []string {
 }
 
 func (e CortexCloudAPIErrorExtra) inputAsString() string {
-	stringInput, err := types.ConvertInterfaceToString(e.Input)
+	stringInput, err := util.ConvertInterfaceToString(e.Input)
 	if err != nil {
 		return "UNKNOWN_TYPE"
 	}
