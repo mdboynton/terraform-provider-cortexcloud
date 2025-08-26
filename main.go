@@ -7,6 +7,7 @@ import (
 	"context"
 	"flag"
 	"log"
+	"runtime/debug"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 
@@ -14,11 +15,21 @@ import (
 )
 
 var (
-	version string = "unknown"
+	buildVersion string = "unknown"
+	buildTime string = "unknown"
+	goVersion string = "unknown"
 )
 
+func logBuildInfo() {
+	if info, ok := debug.ReadBuildInfo(); ok {
+		goVersion = info.GoVersion
+	}
+
+	log.Printf(`{ "buildVersion": "%s", "buildTime: "%s", goVersion: "%s" }`, buildVersion, buildTime, goVersion)
+}
+
 func main() {
-	log.Printf("version: %s\n", version)	
+	logBuildInfo()
 
 	var debug bool
 
@@ -31,7 +42,7 @@ func main() {
 		ProtocolVersion: 6,
 	}
 
-	err := providerserver.Serve(context.Background(), provider.New(version), opts)
+	err := providerserver.Serve(context.Background(), provider.New(buildVersion), opts)
 
 	if err != nil {
 		log.Fatal(err.Error())

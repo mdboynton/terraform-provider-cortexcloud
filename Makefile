@@ -3,7 +3,6 @@ CC_PROVIDER_HOSTNAME = registry.terraform.io
 CC_PROVIDER_NAMESPACE = PaloAltoNetworks
 CC_PROVIDER_NAME = cortexcloud
 CC_PROVIDER_BINARY = terraform-provider-${CC_PROVIDER_NAME}
-#CC_PROVIDER_VERSION ?= 0.0.0-dev
 CC_PROVIDER_VERSION ?= 0.0.0
 
 # OS and architecture of the system that will run the provider
@@ -15,8 +14,10 @@ plugin_directory="${plugin_directory_no_arch}/${TARGET_OS_ARCH}"
 
 IS_CI_EXECUTION=0
 
-VERSION_UUID=$(uuidgen)
-BUILD_FLAGS="-X main.version=${VERSION_UUID}"
+# Populate build flags
+BUILD_VERSION=$(git describe --tags --always)
+BUILD_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+BUILD_FLAGS="-X main.buildVersion=${BUILD_VERSION} -X main.buildTime=${BUILD_TIME}"
 
 # Retrieve operating system name and architecture 
 os := $(shell uname -s | awk '{print tolower($0)}')
@@ -89,13 +90,15 @@ test: test-unit test-acc
 .PHONY: test-unit
 test-unit:
 	@echo "Running unit tests..."
-	@go test -v -cover -race -mod=vendor $$(go list ./... | grep -v /vendor/ | grep -v /acceptance/)
+	@go test -v -cover -race -mod=readonly $$(go list -mod=readonly ./... | grep -v /vendor/ | grep -v /acceptance/)
+#@go test -v -cover -race -mod=vendor $$(go list ./... | grep -v /vendor/ | grep -v /acceptance/)
 
 # Run acceptance tests
 .PHONY: test-acc
 test-acc: build
 	@echo "Running acceptance tests..."
-	@go test -v -cover -race -mod=vendor $$(go list ./... | grep /acceptance/)
+	@go test -v -cover -race -mod=readonly $$(go list -mod=readonly ./... | grep /acceptance/)
+#@go test -v -cover -race -mod=vendor $$(go list ./... | grep /acceptance/)
 
 # Run linter
 .PHONY: lint
