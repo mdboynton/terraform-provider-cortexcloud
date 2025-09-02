@@ -444,43 +444,44 @@ func (r *CloudIntegrationTemplateResource) Schema(ctx context.Context, req resou
 			"tracking_guid": schema.StringAttribute{
 				Description: "TODO (be sure to mention that this is the instance_id)",
 				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				//PlanModifiers: []planmodifier.String{
+				//	stringplanmodifier.UseStateForUnknown(),
+				//},
 			},
 			// TODO: make this a configurable attribute
 			// (this is set to null in the platform if not configured)
 			"outpost_id": schema.StringAttribute{
 				Description: "TODO",
 				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				Default: stringdefault.StaticString(""),
+				//PlanModifiers: []planmodifier.String{
+				//	stringplanmodifier.UseStateForUnknown(),
+				//},
 			},
 			// TODO: Planmodifier to use state if config values are unchanged
 			"automated_deployment_link": schema.StringAttribute{
 				Description: "TODO",
 				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				//PlanModifiers: []planmodifier.String{
+				//	stringplanmodifier.UseStateForUnknown(),
+				//},
 			},
 			// TODO: Planmodifier to use state if config values are unchanged
 			"manual_deployment_link": schema.StringAttribute{
 				Description: "TODO",
 				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				//PlanModifiers: []planmodifier.String{
+				//	stringplanmodifier.UseStateForUnknown(),
+				//},
 			},
 			// TODO: Planmodifier to use state if config values are unchanged
 			"cloud_formation_template_url": schema.StringAttribute{
 				Description: "TODO",
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				//PlanModifiers: []planmodifier.String{
+				//	stringplanmodifier.UseStateForUnknown(),
+				//},
 			},
 		},
 	}
@@ -586,6 +587,11 @@ func (r *CloudIntegrationTemplateResource) Read(ctx context.Context, req resourc
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	
+	//state.RefreshComputedPropertyValues(ctx, &resp.Diagnostics, response)
+	//if resp.Diagnostics.HasError() {
+	//	return
+	//}
 
 	// Set refreshed state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -639,13 +645,8 @@ func (r *CloudIntegrationTemplateResource) Delete(ctx context.Context, req resou
 		return
 	}
 
-	// Delete template
-	err := r.client.DeleteInstances(ctx, []string{state.TrackingGuid.ValueString()})
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Cloud Integration Template Update Error", // TODO: standardize this
-			fmt.Sprintf("error occured while attempting to delete cloud integration template: %s", err.Error()),
-		)
-		return
-	}
+	resp.Diagnostics.AddWarning(
+		"Cloud Integration Template Not Deleted",
+		fmt.Sprintf("Due to current limitations of the Cortex Cloud API, cloud integration templates cannot be deleted outside of the UI. To complete the deletion of this resource, navigate to Settings > Data Sources in the Cortex Cloud UI and manually delete the \"%s\" instance. You may need to remove the filter on instances with the status \"PENDING\" to find the instance in the results table.", state.InstanceName.ValueString()),
+	)
 }

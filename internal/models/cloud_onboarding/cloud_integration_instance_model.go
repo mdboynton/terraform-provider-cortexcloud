@@ -10,12 +10,12 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	//"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 // *********************************************************
 // Structs
 // *********************************************************
+
 type CloudIntegrationInstanceModel struct {
 	Id                      types.String `tfsdk:"id"`
 	AdditionalCapabilities  types.Object `tfsdk:"additional_capabilities"`

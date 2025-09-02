@@ -9,15 +9,15 @@ import (
 	"github.com/mdboynton/cortex-cloud-go/cloudonboarding"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	//"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-// *********************************************************
+
+// ----------------------------------------------------------------------------
 // Structs
-// *********************************************************
+// ----------------------------------------------------------------------------
+
 type CloudIntegrationTemplateModel struct {
 	AccountDetails            types.Object `tfsdk:"account_details"`
 	AdditionalCapabilities    types.Object `tfsdk:"additional_capabilities"`
@@ -68,6 +68,11 @@ func (m *CloudIntegrationTemplateModel) ToCreateRequest(ctx context.Context, dia
 
 	return request
 }
+
+
+// ----------------------------------------------------------------------------
+// SDK Request Conversion
+// ----------------------------------------------------------------------------
 
 func (m *CloudIntegrationTemplateModel) ToGetRequest(ctx context.Context, diagnostics *diag.Diagnostics) cloudonboarding.ListIntegrationInstancesRequest {
 	andFilters := []cloudonboarding.Criteria{
@@ -124,7 +129,8 @@ func (m *CloudIntegrationTemplateModel) ToUpdateRequest(ctx context.Context, dia
 			InstanceId:              m.TrackingGuid.ValueString(),
 			InstanceName:            m.InstanceName.ValueString(),
 			ScopeModifications:      scopeModifications,
-			ScanEnvId:               m.OutpostId.ValueString(),
+			//ScanEnvId:               m.OutpostId.ValueString(),
+			ScanEnvId: "43083abe03a648e7b029b9b1b5403b13",
 		},
 	}
 }
@@ -136,6 +142,11 @@ func (m *CloudIntegrationTemplateModel) ToDeleteRequest(ctx context.Context, dia
 		},
 	}
 }
+
+
+// ----------------------------------------------------------------------------
+// Refresh Resource Attributes
+// ----------------------------------------------------------------------------
 
 func (m *CloudIntegrationTemplateModel) RefreshComputedPropertyValues(diagnostics *diag.Diagnostics, response cloudonboarding.CreateTemplateOrEditIntegrationInstanceResponse) {
 	data := response.Reply

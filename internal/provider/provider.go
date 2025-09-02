@@ -6,8 +6,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"os"
-	"strconv"
 
 	cloudOnboardingDataSources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/data_sources/cloud_onboarding"
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/provider"
@@ -159,7 +157,7 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 		return
 	}
 
-	// Parse config_file
+	// Parse config file
 	(&providerConfig).ParseConfigFile(ctx, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
@@ -170,6 +168,9 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	// Validate provider configuration
+	(&providerConfig).Validate(ctx, &resp.Diagnostics)
 
 	var (
 		clientConfig        *sdk.Config
@@ -187,33 +188,7 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 
 	// TODO: Check api key values against /api_keys/validate endpoint
 
-	if apiUrl == "" {
-		if v := os.Getenv("CORTEX_API_URL"); v == "" {
-			tflog.Error(ctx, `No value provided for required configuration argument "api_url" in provider block or CORTEX_API_URL environment variable.`)
-		} else {
-			apiUrl = v
-		}
-	}
-
-	if apiKey == "" {
-		if v := os.Getenv("CORTEX_API_KEY"); v == "" {
-			tflog.Error(ctx, `No value provided for required configuration argument "api_key" in provider block or CORTEX_API_KEY environment variable.`)
-		} else {
-			apiKey = v
-		}
-	}
-
-	if apiKeyID == 0 {
-		if v := os.Getenv("CORTEX_API_KEY_ID"); v == "" {
-			tflog.Error(ctx, `No value provided for required configuration argument "api_key_id" in provider block or CORTEX_API_KEY_ID environment variable.`)
-		} else {
-			apiKeyID, err = strconv.Atoi(v)
-			if err != nil {
-				tflog.Error(ctx, fmt.Sprintf(`Error occured while converting CORTEX_API_KEY_ID value to int: %s`, err.Error()))
-			}
-		}
-	}
-
+	// Create SDK config from provider values
 	clientConfig = sdk.NewConfig(
 		apiUrl,
 		apiKey,
@@ -227,7 +202,6 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 		sdk.WithLogger(log.TflogAdapter{}),
 		sdk.WithLogLevel(sdkLogLevel),
 	)
-	//}
 
 	// Validate SDK client configuration
 	if err = clientConfig.Validate(); err != nil {
