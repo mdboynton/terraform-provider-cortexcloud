@@ -94,6 +94,8 @@ func TestUnitApplicationSecurityRuleResource(t *testing.T) {
 		acceptance.AppSecRuleLabelsHCL(acceptance.AppSecRule1Labels),
 	)
 
+	//fmt.Println(testConfig)
+
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){

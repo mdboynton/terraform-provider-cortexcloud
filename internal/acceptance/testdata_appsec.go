@@ -29,10 +29,10 @@ var (
 	AppSecRule1Framework1RemediationDescription = "fix it"
 
 	AppSecUnitTestConfigTmpl = `provider "cortexcloud" {
-	api_url = %s
-	api_port = 443
-	api_key = "test"
-	api_key_id = 123
+	cortex_cloud_api_url = %s
+	cortex_cloud_api_port = 443
+	cortex_cloud_api_key = "test"
+	cortex_cloud_api_key_id = 123
 }
 resource "cortexcloud_application_security_rule" "test" {
 	name     = %s
