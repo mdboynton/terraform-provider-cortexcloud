@@ -3,7 +3,7 @@ CC_PROVIDER_HOSTNAME = registry.terraform.io
 CC_PROVIDER_NAMESPACE = PaloAltoNetworks
 CC_PROVIDER_NAME = cortexcloud
 CC_PROVIDER_BINARY = terraform-provider-${CC_PROVIDER_NAME}
-CC_PROVIDER_VERSION ?= 0.0.0
+CC_PROVIDER_VERSION = 0.0.1
 
 # OS and architecture of the system that will run the provider
 # Must follow the schema "os_architecture"
@@ -15,9 +15,9 @@ plugin_directory="${plugin_directory_no_arch}/${TARGET_OS_ARCH}"
 IS_CI_EXECUTION=0
 
 # Populate build flags
-BUILD_VERSION=$(git describe --tags --always)
-BUILD_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-BUILD_FLAGS="-X main.buildVersion=${BUILD_VERSION} -X main.buildTime=${BUILD_TIME}"
+BUILD_VERSION := ${CC_PROVIDER_VERSION}
+BUILD_TIME := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+BUILD_FLAGS := "-X main.buildVersion=${BUILD_VERSION} -X main.buildTime=${BUILD_TIME}"
 
 # Retrieve operating system name and architecture 
 os := $(shell uname -s | awk '{print tolower($0)}')
@@ -47,14 +47,22 @@ endif
 
 # Build provider binary
 .PHONY: build
+.ONESHELL:
 build: checkos
+	@echo "Build flags: ${BUILD_FLAGS}"
 	@echo "Building provider ${CC_PROVIDER_BINARY}"
 	@go build -mod=readonly -ldflags=${BUILD_FLAGS} -o ${CC_PROVIDER_BINARY}
 
 # Build provider binary (skip checkos)
 .PHONY: build-only
 build-only:
-	@go build -mod=readonly -ldflags="${BUILD_FLAGS}" -o ${CC_PROVIDER_BINARY}
+	@go build -mod=readonly -ldflags=${BUILD_FLAGS} -o ${CC_PROVIDER_BINARY}
+	@echo $?
+
+# Build provider binary (skip checkos)
+.PHONY: build-only-test
+build-only-test:
+	go build -mod=readonly -ldflags=${BUILD_FLAGS} -o ${HOME}/terraform-provider-mirror/providers/registry.terraform.io/PaloAltoNetworks/cortexcloud/0.0.0/darwin_arm64/terraform-provider-cortexcloud
 	@echo $?
 
 # Create plugin directory and move binary
@@ -90,7 +98,8 @@ test: test-unit test-acc
 .PHONY: test-unit
 test-unit:
 	@echo "Running unit tests..."
-	@go test -v -cover -race -mod=readonly $$(go list -mod=readonly ./... | grep -v /vendor/ | grep -v /acceptance/)
+	@TF_LOG=DEBUG go test -v -race -mod=readonly $$(go list -mod=readonly ./... | grep -v /vendor/ | grep -v /acceptance/ | grep models/provider)
+#@go test -v -cover -race -mod=readonly $$(go list -mod=readonly ./... | grep -v /vendor/ | grep -v /acceptance/)
 #@go test -v -cover -race -mod=vendor $$(go list ./... | grep -v /vendor/ | grep -v /acceptance/)
 
 # Run acceptance tests

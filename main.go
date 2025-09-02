@@ -25,7 +25,7 @@ func logBuildInfo() {
 		goVersion = info.GoVersion
 	}
 
-	log.Printf(`{ "buildVersion": "%s", "buildTime: "%s", goVersion: "%s" }`, buildVersion, buildTime, goVersion)
+	log.Printf("{ \"buildVersion\": \"%s\", \"buildTime\": \"%s\", goVersion: \"%s\" }", buildVersion, buildTime, goVersion)
 }
 
 func main() {

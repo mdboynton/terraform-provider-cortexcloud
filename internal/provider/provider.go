@@ -7,11 +7,11 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"slices"
 	"strconv"
+	"strings"
 
 	cloudOnboardingDataSources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/data_sources/cloud_onboarding"
-	models "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/provider"
+	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/provider"
 	appSecResources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/resources/application_security"
 	cloudOnboardingResources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/resources/cloud_onboarding"
 	platformResources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/resources/platform"
@@ -29,10 +29,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
+// Ensure the implementation satisfies the expected interfaces.
 var (
 	_ provider.Provider = &CortexCloudProvider{}
 )
 
+// New is a helper function to simplify provider server and testing implementation.
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
 		return &CortexCloudProvider{
@@ -41,14 +43,25 @@ func New(version string) func() provider.Provider {
 	}
 }
 
+// CortexCloudProvider is the provider implementation.
 type CortexCloudProvider struct {
 	version string
 }
 
+func (p *CortexCloudProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
+	resp.TypeName = "cortexcloud"
+	resp.Version = p.version
+}
+
+// Schema defines the provider-level schema for configuration data.
 func (p *CortexCloudProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"api_url": schema.StringAttribute{
+			"config_file": schema.StringAttribute{
+				Optional:    true,
+				Description: "TODO",
+			},
+			"cortex_cloud_api_url": schema.StringAttribute{
 				Optional: true,
 				Description: fmt.Sprintf("The API URL of your Cortex Cloud tenant. "+
 					"You can retrieve this from the Cortex Cloud console by "+
@@ -57,11 +70,11 @@ func (p *CortexCloudProvider) Schema(ctx context.Context, req provider.SchemaReq
 					"also be configured using the `%s` environment "+
 					"variable.", sdk.CORTEXCLOUD_API_URL_ENV_VAR),
 			},
-			"api_port": schema.Int32Attribute{
+			"cortex_cloud_api_port": schema.Int32Attribute{
 				Optional:    true,
 				Description: "TODO",
 			},
-			"api_key": schema.StringAttribute{
+			"cortex_cloud_api_key": schema.StringAttribute{
 				Optional:  true,
 				Sensitive: true,
 				Description: "The API key for the user in Cortex Cloud that the " +
@@ -72,7 +85,7 @@ func (p *CortexCloudProvider) Schema(ctx context.Context, req provider.SchemaReq
 					"with Terraform with the `TF_LOG` environment variable set to `DEBUG`, " +
 					"the provider will output this value in the debug logs.",
 			},
-			"api_key_id": schema.Int32Attribute{
+			"cortex_cloud_api_key_id": schema.Int32Attribute{
 				Optional:  true,
 				Sensitive: true,
 				Description: "The ID of the API key provided in the \"api_key\" " +
@@ -81,11 +94,13 @@ func (p *CortexCloudProvider) Schema(ctx context.Context, req provider.SchemaReq
 					"API Keys. Can also be configured using the `CORTEX_API_KEY_ID` " +
 					"environment variable.",
 			},
-			"insecure": schema.BoolAttribute{
-				Optional: true,
-				Description: "Explicity allow the provider to perform \"insecure\" " +
-					"SSL requests. If omitted, the default value is `false`. Can also " +
-					"be configured using the `CORTEX_TF_INSECURE` environment variable.",
+			"sdk_log_level": schema.StringAttribute{
+				Optional:    true,
+				Description: "TODO",
+			},
+			"skip_ssl_verify": schema.BoolAttribute{
+				Optional:    true,
+				Description: "TODO",
 			},
 			"request_timeout": schema.Int32Attribute{
 				Optional: true,
@@ -113,21 +128,16 @@ func (p *CortexCloudProvider) Schema(ctx context.Context, req provider.SchemaReq
 					"%%USERPROFILE%%`, or the Windows directory. Can also be configured " +
 					"using the `CORTEX_TF_CRASH_STACK_DIR` environment variable.",
 			},
-			"config_file": schema.StringAttribute{
+			"check_environment": schema.BoolAttribute{
 				Optional:    true,
 				Description: "TODO",
 			},
-			"check_environment": schema.BoolAttribute{
+			"log_suppress_credentials": schema.BoolAttribute{
 				Optional:    true,
 				Description: "TODO",
 			},
 		},
 	}
-}
-
-func (p *CortexCloudProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "cortexcloud"
-	resp.Version = p.version
 }
 
 func (p *CortexCloudProvider) Resources(ctx context.Context) []func() resource.Resource {
@@ -147,20 +157,6 @@ func (p *CortexCloudProvider) DataSources(ctx context.Context) []func() datasour
 func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	tflog.Debug(ctx, "Starting provider configuration")
 
-	// Set log level according to Terraform environment variables and print
-	// warning message if debug logs are enabled
-	var logLevel string
-	if slices.ContainsFunc([]string{"DEBUG", "TRACE"}, func(s string) bool {
-		return s == os.Getenv("TF_LOG") || s == os.Getenv("TF_LOG_PROVIDER")
-	}) {
-		logLevel = "debug"
-		tflog.Warn(ctx, "Debug logging enabled. Be aware that your API key "+
-			"and key ID will be visible in the provider log "+
-			"output!")
-	} else {
-		logLevel = "quiet"
-	}
-
 	// Retrieve configuration values from provider block
 	var providerConfig models.CortexCloudProviderModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &providerConfig)...)
@@ -168,72 +164,102 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 		return
 	}
 
+	// Parse config_file
+	(&providerConfig).ParseConfigFile(ctx, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Parse environment variables
+	(&providerConfig).ParseEnvVars(ctx, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	var (
-		clientConfig *sdk.Config
-		err          error
+		clientConfig        *sdk.Config
+		err                 error
+		apiUrl              string
+		apiKey              string
+		apiKeyID            int
+		sdkLogLevel         string
+		suppressCredentials bool
 	)
 
-	// If the config_file argument is defined, initialize SDK client config
-	// using values stored in the provided file
-	if !providerConfig.ConfigFile.IsNull() && !providerConfig.ConfigFile.IsUnknown() {
-		configFile := providerConfig.ConfigFile.ValueString()
+	apiUrl = providerConfig.ApiUrl.ValueString()
+	apiKey = providerConfig.ApiKey.ValueString()
+	apiKeyID = int(providerConfig.ApiKeyId.ValueInt32())
+	sdkLogLevel = providerConfig.SdkLogLevel.ValueString()
+	suppressCredentials = providerConfig.LogSuppressCredentials.ValueBool()
 
-		if configFile != "" {
-			// TODO: handle error
-			clientConfig, _ = sdk.NewConfigFromFile(configFile, providerConfig.CheckEnvironment.ValueBool())
+	// Check Terraform log level environment variables. If any are set to
+	// DEBUG or TRACE, print warning message. This is skipped entirely if the
+	// LogSuppressCredentials provider attribute is set to true.
+	if !suppressCredentials {
+		logLevelEnvVars := []string{
+			"TF_LOG",
+			"TF_LOG_PROVIDER",
+			"TF_LOG_PROVIDER_CORTEXCLOUD",
+			"TF_LOG_SDK", // TODO: double check this
 		}
-		// Otherwise, configure SDK client using values from provider block and
-		// environment variables
-	} else {
-		// Get values of required configuration arguments
-		apiUrl := providerConfig.ApiUrl.ValueString()
-		apiKey := providerConfig.ApiKey.ValueString()
-		apiKeyId := int(providerConfig.ApiKeyId.ValueInt32())
 
-		if apiUrl == "" {
-			if v := os.Getenv("CORTEX_API_URL"); v == "" {
-				tflog.Error(ctx, `No value provided for required configuration argument "api_url" in provider block or CORTEX_API_URL environment variable.`)
-			} else {
-				apiUrl = v
-			}
-		}
-		tflog.Debug(ctx, fmt.Sprintf(`CORTEX_API_URL="%s"`, apiUrl))
-
-		if apiKey == "" {
-			if v := os.Getenv("CORTEX_API_KEY"); v == "" {
-				tflog.Error(ctx, `No value provided for required configuration argument "api_key" in provider block or CORTEX_API_KEY environment variable.`)
-			} else {
-				apiKey = v
-			}
-		}
-		tflog.Debug(ctx, fmt.Sprintf(`CORTEX_API_KEY="%s"`, apiKey))
-
-		if apiKeyId == 0 {
-			if v := os.Getenv("CORTEX_API_KEY_ID"); v == "" {
-				tflog.Error(ctx, `No value provided for required configuration argument "api_key_id" in provider block or CORTEX_API_KEY_ID environment variable.`)
-			} else {
-				apiKeyId, err = strconv.Atoi(v)
-				if err != nil {
-					tflog.Error(ctx, fmt.Sprintf(`Error occured while converting CORTEX_API_KEY_ID value to int: %s`, err.Error()))
+		for _, envVar := range logLevelEnvVars {
+			if logLevel := os.Getenv(envVar); logLevel != "" {
+				upperLogLevel := strings.ToUpper(logLevel)
+				if upperLogLevel == "DEBUG" || upperLogLevel == "TRACE" {
+					tflog.Warn(ctx, fmt.Sprintf(
+						"Debug logging enabled via %s=%s. Be aware that your API key and key ID will be visible in the provider log output! To suppress these values, set `log_suppress_credentials` to `true` in the provider configuration.",
+						envVar, logLevel))
+					break
 				}
 			}
 		}
-		tflog.Debug(ctx, fmt.Sprintf(`CORTEX_API_KEY_ID=%d`, apiKeyId))
-
-		clientConfig = sdk.NewConfig(
-			apiUrl,
-			apiKey,
-			apiKeyId,
-			providerConfig.CheckEnvironment.ValueBool(),
-			sdk.WithApiPort(int(providerConfig.ApiPort.ValueInt32())),
-			sdk.WithSkipVerifyCertificate(providerConfig.Insecure.ValueBool()),
-			sdk.WithTimeout(int(providerConfig.RequestTimeout.ValueInt32())),
-			//sdk.WithRetryMaxDelay(providerConfig.RetryMaxDelay),
-			sdk.WithCrashStackDir(providerConfig.CrashStackDir.ValueString()),
-			sdk.WithLogger(log.TflogAdapter{}),
-			sdk.WithLogLevel(logLevel),
-		)
 	}
+
+	if apiUrl == "" {
+		if v := os.Getenv("CORTEX_API_URL"); v == "" {
+			tflog.Error(ctx, `No value provided for required configuration argument "api_url" in provider block or CORTEX_API_URL environment variable.`)
+		} else {
+			apiUrl = v
+		}
+	}
+	tflog.Debug(ctx, fmt.Sprintf(`CORTEX_API_URL="%s"`, apiUrl))
+
+	if apiKey == "" {
+		if v := os.Getenv("CORTEX_API_KEY"); v == "" {
+			tflog.Error(ctx, `No value provided for required configuration argument "api_key" in provider block or CORTEX_API_KEY environment variable.`)
+		} else {
+			apiKey = v
+		}
+	}
+	tflog.Debug(ctx, fmt.Sprintf(`CORTEX_API_KEY="%s"`, apiKey))
+
+	if apiKeyID == 0 {
+		if v := os.Getenv("CORTEX_API_KEY_ID"); v == "" {
+			tflog.Error(ctx, `No value provided for required configuration argument "api_key_id" in provider block or CORTEX_API_KEY_ID environment variable.`)
+		} else {
+			apiKeyID, err = strconv.Atoi(v)
+			if err != nil {
+				tflog.Error(ctx, fmt.Sprintf(`Error occured while converting CORTEX_API_KEY_ID value to int: %s`, err.Error()))
+			}
+		}
+	}
+	tflog.Debug(ctx, fmt.Sprintf(`CORTEX_API_KEY_ID=%d`, apiKeyID))
+
+	clientConfig = sdk.NewConfig(
+		apiUrl,
+		apiKey,
+		apiKeyID,
+		providerConfig.CheckEnvironment.ValueBool(),
+		sdk.WithApiPort(int(providerConfig.ApiPort.ValueInt32())),
+		sdk.WithSkipVerifyCertificate(providerConfig.SkipSslVerify.ValueBool()),
+		sdk.WithTimeout(int(providerConfig.RequestTimeout.ValueInt32())),
+		//sdk.WithRetryMaxDelay(providerConfig.RetryMaxDelay),
+		sdk.WithCrashStackDir(providerConfig.CrashStackDir.ValueString()),
+		sdk.WithLogger(log.TflogAdapter{}),
+		sdk.WithLogLevel(sdkLogLevel),
+	)
+	//}
 
 	// Validate SDK client configuration
 	if err = clientConfig.Validate(); err != nil {
