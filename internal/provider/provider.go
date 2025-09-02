@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 
 	cloudOnboardingDataSources "github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/data_sources/cloud_onboarding"
 	"github.com/PaloAltoNetworks/terraform-provider-cortexcloud/internal/models/provider"
@@ -132,10 +131,6 @@ func (p *CortexCloudProvider) Schema(ctx context.Context, req provider.SchemaReq
 				Optional:    true,
 				Description: "TODO",
 			},
-			"log_suppress_credentials": schema.BoolAttribute{
-				Optional:    true,
-				Description: "TODO",
-			},
 		},
 	}
 }
@@ -183,38 +178,12 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 		apiKey              string
 		apiKeyID            int
 		sdkLogLevel         string
-		suppressCredentials bool
 	)
 
 	apiUrl = providerConfig.ApiUrl.ValueString()
 	apiKey = providerConfig.ApiKey.ValueString()
 	apiKeyID = int(providerConfig.ApiKeyId.ValueInt32())
 	sdkLogLevel = providerConfig.SdkLogLevel.ValueString()
-	suppressCredentials = providerConfig.LogSuppressCredentials.ValueBool()
-
-	// Check Terraform log level environment variables. If any are set to
-	// DEBUG or TRACE, print warning message. This is skipped entirely if the
-	// LogSuppressCredentials provider attribute is set to true.
-	if !suppressCredentials {
-		logLevelEnvVars := []string{
-			"TF_LOG",
-			"TF_LOG_PROVIDER",
-			"TF_LOG_PROVIDER_CORTEXCLOUD",
-			"TF_LOG_SDK", // TODO: double check this
-		}
-
-		for _, envVar := range logLevelEnvVars {
-			if logLevel := os.Getenv(envVar); logLevel != "" {
-				upperLogLevel := strings.ToUpper(logLevel)
-				if upperLogLevel == "DEBUG" || upperLogLevel == "TRACE" {
-					tflog.Warn(ctx, fmt.Sprintf(
-						"Debug logging enabled via %s=%s. Be aware that your API key and key ID will be visible in the provider log output! To suppress these values, set `log_suppress_credentials` to `true` in the provider configuration.",
-						envVar, logLevel))
-					break
-				}
-			}
-		}
-	}
 
 	if apiUrl == "" {
 		if v := os.Getenv("CORTEX_API_URL"); v == "" {

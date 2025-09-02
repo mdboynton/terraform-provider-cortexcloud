@@ -33,7 +33,6 @@ type CortexCloudProviderModel struct {
 	RequestRetryInterval   types.Int32  `tfsdk:"request_retry_interval"`
 	CrashStackDir          types.String `tfsdk:"crash_stack_dir"`
 	CheckEnvironment       types.Bool   `tfsdk:"check_environment"`
-	LogSuppressCredentials types.Bool   `tfsdk:"log_suppress_credentials"`
 }
 
 var (
@@ -81,11 +80,6 @@ var (
 		"CORTEX_CLOUD_CRASH_STACK_DIR",
 		"CORTEXCLOUD_CRASH_STACK_DIR",
 		"CORTEX_CRASH_STACK_DIR",
-	}
-	LogSuppressCredentialsEnvVars = []string{
-		"CORTEX_CLOUD_LOG_SUPPRESS_CREDENTIALS",
-		"CORTEXCLOUD_LOG_SUPPRESS_CREDENTIALS",
-		"CORTEX_LOG_SUPPRESS_CREDENTIALS",
 	}
 )
 
@@ -140,7 +134,6 @@ func (m *CortexCloudProviderModel) ParseConfigFile(ctx context.Context, diagnost
 		RequestRetryInterval   *int32  `json:"request_retry_interval"`
 		CrashStackDir          *string `json:"crash_stack_dir"`
 		CheckEnvironment       *bool   `json:"check_environment"`
-		LogSuppressCredentials *bool   `json:"log_suppress_credentials"`
 	}{}
 
 	if err := json.Unmarshal(data, &config); err != nil {
@@ -184,9 +177,6 @@ func (m *CortexCloudProviderModel) ParseConfigFile(ctx context.Context, diagnost
 	}
 	if config.CheckEnvironment != nil {
 		m.CheckEnvironment = types.BoolValue(*config.CheckEnvironment)
-	}
-	if config.LogSuppressCredentials != nil {
-		m.LogSuppressCredentials = types.BoolValue(*config.LogSuppressCredentials)
 	}
 }
 
@@ -280,16 +270,6 @@ func (m *CortexCloudProviderModel) ParseEnvVars(ctx context.Context, diagnostics
 			}
 		} else {
 			diagnostics.AddAttributeWarning(path.Root("skip_ssl_verify"), "Environment Variable Parsing Error", fmt.Sprintf("Failed to parse value from environment variable \"%s\" to boolean\nError: %s", val, err.Error()))
-		}
-	}
-	if val, ok := MultiEnvGet(LogSuppressCredentialsEnvVars); ok {
-		if b, err := strconv.ParseBool(val); err == nil {
-			if m.LogSuppressCredentials.IsNull() || b != m.LogSuppressCredentials.ValueBool() {
-				tflog.Debug(ctx, fmt.Sprintf("Overwriting log_suppress_credentials with value from environment variable (%t)", b))
-				m.LogSuppressCredentials = types.BoolValue(b)
-			}
-		} else {
-			diagnostics.AddAttributeWarning(path.Root("log_suppress_credentials"), "Environment Variable Parsing Error", fmt.Sprintf("Failed to parse value from environment variable \"%s\" to boolean\nError: %s", val, err.Error()))
 		}
 	}
 }
