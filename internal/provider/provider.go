@@ -185,6 +185,8 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 	apiKeyID = int(providerConfig.ApiKeyId.ValueInt32())
 	sdkLogLevel = providerConfig.SdkLogLevel.ValueString()
 
+	// TODO: Check api key values against /api_keys/validate endpoint
+
 	if apiUrl == "" {
 		if v := os.Getenv("CORTEX_API_URL"); v == "" {
 			tflog.Error(ctx, `No value provided for required configuration argument "api_url" in provider block or CORTEX_API_URL environment variable.`)
@@ -192,7 +194,6 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 			apiUrl = v
 		}
 	}
-	tflog.Debug(ctx, fmt.Sprintf(`CORTEX_API_URL="%s"`, apiUrl))
 
 	if apiKey == "" {
 		if v := os.Getenv("CORTEX_API_KEY"); v == "" {
@@ -201,7 +202,6 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 			apiKey = v
 		}
 	}
-	tflog.Debug(ctx, fmt.Sprintf(`CORTEX_API_KEY="%s"`, apiKey))
 
 	if apiKeyID == 0 {
 		if v := os.Getenv("CORTEX_API_KEY_ID"); v == "" {
@@ -213,7 +213,6 @@ func (p *CortexCloudProvider) Configure(ctx context.Context, req provider.Config
 			}
 		}
 	}
-	tflog.Debug(ctx, fmt.Sprintf(`CORTEX_API_KEY_ID=%d`, apiKeyID))
 
 	clientConfig = sdk.NewConfig(
 		apiUrl,
